@@ -39,5 +39,4 @@ out/
 .aws-sam
 **.toml
 
-### Mac OS ###
-.DS_Store
+src/main/gen/
