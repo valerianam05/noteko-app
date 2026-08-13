@@ -1,0 +1,463 @@
+openapi: 3.0.3
+info:
+  title: HEI Grade Flow API
+  description: API de gestion des notes, parcours (EL/TN), groupes et relevés de notes pour HEI.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Serveur de Développement Local
+
+paths:
+
+  /api/users/me:
+    get:
+      summary: Récupérer le profil de l'utilisateur connecté
+      tags: [Users]
+      responses:
+        '200':
+          description: Profil utilisateur retourné
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+
+  /api/students/{std}:
+    get:
+      summary: Récupérer un étudiant par son numéro STD
+      tags: [Students]
+      parameters:
+        - name: std
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "STD21001"
+      responses:
+        '200':
+          description: Fiche étudiant trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentResponse'
+        '404':
+          description: Étudiant non trouvé
+
+  /api/promotions:
+    get:
+      summary: Lister toutes les promotions
+      tags: [Academic]
+      responses:
+        '200':
+          description: Liste des promotions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PromotionResponse'
+
+  /api/promotions/{id}/groups:
+    get:
+      summary: Lister les groupes d'une promotion
+      tags: [Academic]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Liste des groupes (K1, K2, K3...)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GroupResponse'
+
+  /api/enrollments:
+    post:
+      summary: Inscrire/affecter un étudiant à un groupe et un parcours pour un semestre
+      tags: [Academic]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnrollmentRequest'
+      responses:
+        '201':
+          description: Inscription enregistrée avec succès
+
+  /api/courses:
+    get:
+      summary: Liste des cours
+      tags: [Courses]
+      parameters:
+        - name: parcours
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [COMMON, EL, TN]
+      responses:
+        '200':
+          description: Liste des cours
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CourseResponse'
+
+  /api/course-assignments:
+    post:
+      summary: Assigner un enseignant à un cours pour un groupe
+      tags: [Courses]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseAssignmentRequest'
+      responses:
+        '201':
+          description: Enseignant assigné avec succès
+
+  /api/evaluations:
+    post:
+      summary: Créer une nouvelle évaluation/épreuve
+      tags: [Grades]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvaluationRequest'
+      responses:
+        '201':
+          description: Évaluation créée
+
+  /api/grades:
+    post:
+      summary: Attribuer une note initiale à un étudiant
+      tags: [Grades]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GradeRequest'
+      responses:
+        '201':
+          description: Note enregistrée
+
+  /api/grades/{gradeId}:
+    put:
+      summary: Modifier une note (déclenche l'historisation)
+      tags: [Grades]
+      parameters:
+        - name: gradeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GradeUpdateRequest'
+      responses:
+        '200':
+          description: Note modifiée et entrée ajoutée dans l'historique
+
+  /api/grades/{gradeId}/history:
+    get:
+      summary: Consulter l'historique des modifications d'une note
+      tags: [Grades]
+      parameters:
+        - name: gradeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Historique des modifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GradeHistoryResponse'
+
+  /api/students/{std}/transcript:
+    get:
+      summary: Obtenir les données du relevé de notes d'un étudiant
+      tags: [Transcripts & Exports]
+      parameters:
+        - name: std
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: semester
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [S1, S2, S3, S4, S5, S6]
+      responses:
+        '200':
+          description: Données du bulletin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranscriptResponse'
+
+  /api/students/{std}/transcript/send-email:
+    post:
+      summary: Générer et envoyer le bulletin PDF par email à l'étudiant
+      tags: [Transcripts & Exports]
+      parameters:
+        - name: std
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Email envoyé avec succès
+
+  /api/promotions/{promotionId}/graduates/excel:
+    get:
+      summary: Télécharger la liste Excel (.xlsx) des diplômés sur 3 ans
+      tags: [Transcripts & Exports]
+      parameters:
+        - name: promotionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Fichier Excel téléchargé
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+
+components:
+  schemas:
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        role:
+          type: string
+          enum: [STUDENT, TEACHER, ADMIN]
+
+    StudentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        stdNumber:
+          type: string
+          example: "STD21001"
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+
+    PromotionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "Promotion K"
+        year:
+          type: integer
+          example: 2026
+
+    GroupResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "K1"
+        promotionId:
+          type: string
+          format: uuid
+
+    EnrollmentRequest:
+      type: object
+      required: [studentId, groupId, semester, parcours, academicYear]
+      properties:
+        studentId:
+          type: string
+          format: uuid
+        groupId:
+          type: string
+          format: uuid
+        semester:
+          type: string
+          enum: [S1, S2, S3, S4, S5, S6]
+        parcours:
+          type: string
+          enum: [COMMON, EL, TN]
+        academicYear:
+          type: string
+          example: "2025-2026"
+
+    CourseResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: "PROG4"
+        title:
+          type: string
+          example: "Programmation Java / Poja"
+        credits:
+          type: integer
+          example: 6
+        parcours:
+          type: string
+          enum: [COMMON, EL, TN]
+
+    CourseAssignmentRequest:
+      type: object
+      required: [courseId, teacherId, groupId, academicYear]
+      properties:
+        courseId:
+          type: string
+          format: uuid
+        teacherId:
+          type: string
+          format: uuid
+        groupId:
+          type: string
+          format: uuid
+        academicYear:
+          type: string
+          example: "2025-2026"
+
+    EvaluationRequest:
+      type: object
+      required: [courseId, title, type, coefficient, dateEvaluation]
+      properties:
+        courseId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          example: "Examen Final"
+        type:
+          type: string
+          example: "EXAMEN"
+        coefficient:
+          type: number
+          format: double
+          example: 0.6
+        dateEvaluation:
+          type: string
+          format: date-time
+
+    GradeRequest:
+      type: object
+      required: [studentId, evaluationId, score]
+      properties:
+        studentId:
+          type: string
+          format: uuid
+        evaluationId:
+          type: string
+          format: uuid
+        score:
+          type: number
+          format: double
+          example: 14.5
+
+    GradeUpdateRequest:
+      type: object
+      required: [score, modifiedByUserId, reason]
+      properties:
+        score:
+          type: number
+          format: double
+          example: 15.0
+        modifiedByUserId:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          example: "Réclamation étudiant - Correction erreur"
+
+    GradeHistoryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        gradeId:
+          type: string
+          format: uuid
+        oldValue:
+          type: number
+        newValue:
+          type: number
+        modifiedBy:
+          type: string
+        modifiedAt:
+          type: string
+          format: date-time
+        reason:
+          type: string
+
+    TranscriptResponse:
+      type: object
+      properties:
+        studentStd:
+          type: string
+        studentName:
+          type: string
+        semester:
+          type: string
+        parcours:
+          type: string
+        generalAverage:
+          type: number
+        totalValidatedCredits:
+          type: integer
+        isGraduated:
+          type: boolean
