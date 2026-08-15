@@ -8,9 +8,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface StudentEnrollmentRepository extends JpaRepository<StudentEnrollment, UUID> {
 
-  Optional<StudentEnrollment> findByStudentIdAndAcademicYearId(UUID studentId, UUID academicYearId);
+  Optional<StudentEnrollment> findByStudentUserIdAndSemesterIdAndAcademicYearId(
+      UUID studentUserId, UUID semesterId, UUID academicYearId);
 
   List<StudentEnrollment> findByGroupIdAndAcademicYearId(UUID groupId, UUID academicYearId);
 
-  List<StudentEnrollment> findByStudentIdOrderByAcademicYearIdAsc(UUID studentId);
+  List<StudentEnrollment> findByStudentUserIdOrderByAcademicYearIdAsc(UUID studentUserId);
+
+  Optional<StudentEnrollment> findFirstByStudentUserIdAndDateFinIsNullOrderByDateDebutDesc(
+      UUID studentUserId);
 }
