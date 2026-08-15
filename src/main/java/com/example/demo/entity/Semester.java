@@ -2,20 +2,9 @@ package com.example.demo.entity;
 
 import com.example.demo.entity.enums.AcademicLevel;
 import com.example.demo.entity.enums.SemesterCode;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import java.util.UUID;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Table(name = "semester")
@@ -32,11 +21,11 @@ public class Semester {
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false, unique = true, length = 10)
-  private SemesterCode code;
+  private SemesterCode code; // S1..S6
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false, length = 10)
-  private AcademicLevel level;
+  private AcademicLevel level; // L1/L2/L3
 
   @Column(name = "order_num", nullable = false)
   private Integer orderNum;
