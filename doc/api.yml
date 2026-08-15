@@ -1,14 +1,61 @@
 openapi: 3.0.3
 info:
   title: HEI Grade Flow API
-  description: API de gestion des notes, parcours (EL/TN), groupes et relevés de notes pour HEI.
-  version: 1.0.0
+  description: |
+    API de gestion des notes, parcours (EL/TN), groupes, validations de crédits
+    et relevés de notes pour HEI.
+
+    ### Authentification et Sécurité :
+    - **Gestion de compte :** Aucun auto-enregistrement public (`/register`). Les comptes sont créés exclusivement par un **ADMIN**.
+    - **Connexion :** Tous les utilisateurs (STUDENT, TEACHER, ADMIN) s'authentifient via `POST /api/auth/login` pour obtenir un jeton JWT.
+
+    ### Matrice de Sécurité & Droits d'accès (RBAC) :
+    - **STUDENT** : Peut consulter exclusivement SES notes, SES inscriptions (groupe, semestre, parcours EL/TN) et SES relevés de notes.
+    - **TEACHER** : Peut consulter et modifier TOUTES les notes des cours qui lui sont affectés, créer des évaluations et publier les notes.
+    - **ADMIN** : Accès total sur tout le système (création utilisateurs/étudiants/enseignants, inscriptions, affectations, exports Excel des diplômés sur 3 ans, audits).
+
+  version: 3.0.0
 
 servers:
   - url: http://localhost:8080
     description: Serveur de Développement Local
 
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Authentication
+  - name: Users
+  - name: Students
+  - name: Teachers
+  - name: Academic
+  - name: Courses
+  - name: Grades
+  - name: Validations
+  - name: Transcripts & Exports
+
 paths:
+
+  /api/auth/login:
+    post:
+      summary: Authentification de tout utilisateur (Login)
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Connexion réussie, jeton JWT retourné
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
 
   /api/users/me:
     get:
@@ -16,11 +63,97 @@ paths:
       tags: [Users]
       responses:
         '200':
-          description: Profil utilisateur retourné
+          description: Profil utilisateur retourné avec succès
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/academic-years:
+    get:
+      summary: Lister toutes les années académiques
+      tags: [Academic]
+      responses:
+        '200':
+          description: Liste des années académiques
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AcademicYearResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+    post:
+      summary: Créer une nouvelle année académique
+      tags: [Academic]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcademicYearRequest'
+      responses:
+        '201':
+          description: Année académique créée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcademicYearResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /api/students:
+    get:
+      summary: Lister les étudiants (avec filtres optionnels)
+      tags: [Students]
+      parameters:
+        - name: promotionId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: groupId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: academicYearId
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Liste des étudiants
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StudentResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+    post:
+      summary: Créer une fiche étudiant (ADMIN uniquement - génère le compte APP_USER associé)
+      tags: [Students]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStudentRequest'
+      responses:
+        '201':
+          description: Étudiant créé avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
 
   /api/students/{std}:
     get:
@@ -30,9 +163,7 @@ paths:
         - name: std
           in: path
           required: true
-          schema:
-            type: string
-          example: "STD21001"
+          schema: { type: string, example: "STD21001" }
       responses:
         '200':
           description: Fiche étudiant trouvée
@@ -40,8 +171,73 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StudentResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
         '404':
           description: Étudiant non trouvé
+
+  /api/teachers:
+    get:
+      summary: Lister tous les enseignants
+      tags: [Teachers]
+      responses:
+        '200':
+          description: Liste des enseignants
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TeacherResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+    post:
+      summary: Créer une fiche enseignant (ADMIN uniquement - génère le compte APP_USER associé)
+      tags: [Teachers]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTeacherRequest'
+      responses:
+        '201':
+          description: Enseignant créé avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeacherResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /api/teachers/{id}:
+    get:
+      summary: Récupérer un enseignant par ID
+      tags: [Teachers]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Fiche enseignant trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeacherResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          description: Enseignant non trouvé
 
   /api/promotions:
     get:
@@ -56,6 +252,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/PromotionResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
 
   /api/promotions/{id}/groups:
     get:
@@ -65,22 +263,134 @@ paths:
         - name: id
           in: path
           required: true
-          schema:
-            type: string
-            format: uuid
+          schema: { type: string, format: uuid }
       responses:
         '200':
-          description: Liste des groupes (K1, K2, K3...)
+          description: Liste des groupes de la promotion
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/GroupResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/groups:
+    get:
+      summary: Lister tous les groupes (filtrable par promotion et parcours)
+      tags: [Academic]
+      parameters:
+        - name: promotionId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: parcours
+          in: query
+          schema: { type: string, enum: [COMMON, EL, TN] }
+      responses:
+        '200':
+          description: Liste des groupes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GroupResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+    post:
+      summary: Créer un nouveau groupe (ADMIN uniquement)
+      tags: [Academic]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGroupRequest'
+      responses:
+        '201':
+          description: Groupe créé avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /api/groups/{id}/students:
+    get:
+      summary: Lister les étudiants actuellement inscrits dans un groupe
+      description: Utile pour l'interface de saisie de notes par l'enseignant.
+      tags: [Academic]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Liste des étudiants du groupe (inscription active, dateFin nulle)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StudentResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /api/semesters:
+    get:
+      summary: Lister tous les semestres (S1 → S6)
+      tags: [Academic]
+      responses:
+        '200':
+          description: Liste des semestres
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SemesterResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
 
   /api/enrollments:
+    get:
+      summary: Lister les inscriptions (filtres possibles)
+      tags: [Academic]
+      parameters:
+        - name: studentId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: groupId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: semesterId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: academicYearId
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Liste des inscriptions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EnrollmentResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
     post:
-      summary: Inscrire/affecter un étudiant à un groupe et un parcours pour un semestre
+      summary: Inscrire / affecter un étudiant à un groupe (le parcours est déduit du groupe)
       tags: [Academic]
       requestBody:
         required: true
@@ -90,19 +400,65 @@ paths:
               $ref: '#/components/schemas/EnrollmentRequest'
       responses:
         '201':
-          description: Inscription enregistrée avec succès
+          description: Inscription enregistrée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /api/enrollments/{id}:
+    patch:
+      summary: Clôturer une inscription (renseigner dateFin, lors d'un changement de groupe)
+      description: >
+        À utiliser à la place d'une logique implicite côté serveur : le changement de groupe
+        se fait en clôturant explicitement l'ancienne STUDENT_ENROLLMENT (dateFin) puis en créant
+        la nouvelle via POST /api/enrollments.
+      tags: [Academic]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [dateFin]
+              properties:
+                dateFin:
+                  type: string
+                  format: date
+      responses:
+        '200':
+          description: Inscription clôturée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          description: Inscription non trouvée
 
   /api/courses:
     get:
-      summary: Liste des cours
+      summary: Lister les cours
       tags: [Courses]
       parameters:
         - name: parcours
           in: query
-          required: false
-          schema:
-            type: string
-            enum: [COMMON, EL, TN]
+          schema: { type: string, enum: [COMMON, EL, TN] }
+        - name: semesterId
+          in: query
+          schema: { type: string, format: uuid }
       responses:
         '200':
           description: Liste des cours
@@ -112,10 +468,66 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/CourseResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/courses/{id}:
+    get:
+      summary: Récupérer un cours par son ID
+      tags: [Courses]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Détail du cours
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Cours non trouvé
 
   /api/course-assignments:
+    get:
+      summary: Lister les affectations enseignant ↔ cours ↔ année
+      tags: [Courses]
+      parameters:
+        - name: courseId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: teacherId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: groupId
+          in: query
+          description: Filtre via COURSE_ASSIGNMENT_GROUP
+          schema: { type: string, format: uuid }
+        - name: academicYearId
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Liste des affectations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CourseAssignmentResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
     post:
-      summary: Assigner un enseignant à un cours pour un groupe
+      summary: Assigner un enseignant à un cours pour une année académique
+      description: >
+        Ne prend plus de groupId directement (voir MCD final). Une fois l'affectation créée,
+        rattacher un ou plusieurs groupes via POST /api/course-assignments/{id}/groups.
       tags: [Courses]
       requestBody:
         required: true
@@ -125,11 +537,127 @@ paths:
               $ref: '#/components/schemas/CourseAssignmentRequest'
       responses:
         '201':
-          description: Enseignant assigné avec succès
+          description: Affectation créée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseAssignmentResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /api/course-assignments/{id}:
+    get:
+      summary: Récupérer une affectation par son ID
+      tags: [Courses]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Détail de l'affectation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseAssignmentResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Affectation non trouvée
+
+  /api/course-assignments/{id}/groups:
+    get:
+      summary: Lister les groupes rattachés à une affectation (COURSE_ASSIGNMENT_GROUP)
+      tags: [Courses]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Liste des groupes de l'affectation (vide = toute la promotion selon convention métier)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CourseAssignmentGroupResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+    post:
+      summary: Rattacher un groupe supplémentaire à une affectation existante
+      tags: [Courses]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseAssignmentGroupRequest'
+      responses:
+        '201':
+          description: Groupe rattaché à l'affectation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseAssignmentGroupResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /api/course-assignments/{id}/groups/{groupId}:
+    delete:
+      summary: Retirer un groupe d'une affectation existante
+      tags: [Courses]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: groupId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '204':
+          description: Groupe retiré de l'affectation
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          description: Association non trouvée
 
   /api/evaluations:
+    get:
+      summary: Lister les évaluations
+      tags: [Grades]
+      parameters:
+        - name: courseAssignmentId
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Liste des évaluations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EvaluationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
     post:
-      summary: Créer une nouvelle évaluation/épreuve
+      summary: Créer une nouvelle évaluation (rattachée à une affectation cours+enseignant+année)
       tags: [Grades]
       requestBody:
         required: true
@@ -140,10 +668,89 @@ paths:
       responses:
         '201':
           description: Évaluation créée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /api/evaluations/{id}:
+    get:
+      summary: Récupérer une évaluation par son ID
+      tags: [Grades]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Détail de l'évaluation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Évaluation non trouvée
+
+  /api/evaluations/{id}/publish:
+    post:
+      summary: Publier toutes les notes brouillon d'une évaluation (GRADE.published = true)
+      tags: [Grades]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Notes publiées (visibles par les étudiants)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GradeResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
 
   /api/grades:
+    get:
+      summary: Lister les notes
+      tags: [Grades]
+      parameters:
+        - name: studentId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: evaluationId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: published
+          in: query
+          description: Filtrer notes brouillon (false) ou publiées (true)
+          schema: { type: boolean }
+      responses:
+        '200':
+          description: Liste des notes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GradeResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
     post:
-      summary: Attribuer une note initiale à un étudiant
+      summary: Attribuer une note initiale (créée en brouillon, published=false)
       tags: [Grades]
       requestBody:
         required: true
@@ -154,18 +761,45 @@ paths:
       responses:
         '201':
           description: Note enregistrée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GradeResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
 
   /api/grades/{gradeId}:
-    put:
-      summary: Modifier une note (déclenche l'historisation)
+    get:
+      summary: Récupérer une note par son ID
       tags: [Grades]
       parameters:
         - name: gradeId
           in: path
           required: true
-          schema:
-            type: string
-            format: uuid
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Détail de la note
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GradeResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          description: Note non trouvée
+    put:
+      summary: Modifier une note (avec motif et historisation automatique)
+      tags: [Grades]
+      parameters:
+        - name: gradeId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
       requestBody:
         required: true
         content:
@@ -174,45 +808,90 @@ paths:
               $ref: '#/components/schemas/GradeUpdateRequest'
       responses:
         '200':
-          description: Note modifiée et entrée ajoutée dans l'historique
+          description: Note modifiée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GradeResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
 
   /api/grades/{gradeId}/history:
     get:
-      summary: Consulter l'historique des modifications d'une note
+      summary: Consulter l'historique d'une note
       tags: [Grades]
       parameters:
         - name: gradeId
           in: path
           required: true
-          schema:
-            type: string
-            format: uuid
+          schema: { type: string, format: uuid }
       responses:
         '200':
-          description: Historique des modifications
+          description: Historique retourné
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/GradeHistoryResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/course-validations:
+    get:
+      summary: Lister les validations de crédits (cache)
+      tags: [Validations]
+      parameters:
+        - name: studentId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: academicYearId
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Liste des validations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CourseValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+    post:
+      summary: (Re)calculer et mettre en cache la validation d'un cours pour un étudiant
+      tags: [Validations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseValidationRequest'
+      responses:
+        '201':
+          description: Bilan calculé et enregistré (computedAt mis à jour)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
 
   /api/students/{std}/transcript:
     get:
-      summary: Obtenir les données du relevé de notes d'un étudiant
+      summary: Obtenir les données du relevé de notes
       tags: [Transcripts & Exports]
       parameters:
         - name: std
           in: path
           required: true
-          schema:
-            type: string
-        - name: semester
+          schema: { type: string, example: "STD21001" }
+        - name: semesterCode
           in: query
-          required: false
-          schema:
-            type: string
-            enum: [S1, S2, S3, S4, S5, S6]
+          schema: { type: string, enum: [S1, S2, S3, S4, S5, S6] }
       responses:
         '200':
           description: Données du bulletin
@@ -220,244 +899,470 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TranscriptResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
 
-  /api/students/{std}/transcript/send-email:
-    post:
-      summary: Générer et envoyer le bulletin PDF par email à l'étudiant
+  /api/students/{std}/graduation-status:
+    get:
+      summary: Vérifier le statut de diplomation d'un étudiant (60 crédits x 3 niveaux)
+      description: >
+        Calcule, à partir de COURSE_VALIDATION (cache) sur L1+L2+L3, si l'étudiant a validé
+        les 180 crédits requis. Base du filtre utilisé par l'export Excel des diplômés.
       tags: [Transcripts & Exports]
       parameters:
         - name: std
           in: path
           required: true
-          schema:
-            type: string
+          schema: { type: string, example: "STD21001" }
       responses:
         '200':
-          description: Email envoyé avec succès
+          description: Statut de diplomation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GraduationStatusResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Étudiant non trouvé
 
-  /api/promotions/{promotionId}/graduates/excel:
-    get:
-      summary: Télécharger la liste Excel (.xlsx) des diplômés sur 3 ans
+  /api/students/{std}/transcript/send-email:
+    post:
+      summary: Générer le relevé PDF, le déposer sur S3 et l'envoyer par email à l'étudiant
+      description: Crée une entrée DOCUMENT_EXPORT (docType=TRANSCRIPT_PDF) et déclenche l'envoi asynchrone.
       tags: [Transcripts & Exports]
       parameters:
-        - name: promotionId
+        - name: std
           in: path
           required: true
-          schema:
-            type: string
-            format: uuid
+          schema: { type: string, example: "STD21001" }
+        - name: semesterCode
+          in: query
+          schema: { type: string, enum: [S1, S2, S3, S4, S5, S6] }
+      responses:
+        '202':
+          description: Génération et envoi initiés
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentExportResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Étudiant non trouvé
+
+  /api/document-exports:
+    get:
+      summary: Consulter l'historique des exports (relevés PDF et listes Excel)
+      tags: [Transcripts & Exports]
+      parameters:
+        - name: studentId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: promotionId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: academicYearId
+          in: query
+          schema: { type: string, format: uuid }
       responses:
         '200':
-          description: Fichier Excel téléchargé
+          description: Historique des exports
           content:
-            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+            application/json:
               schema:
-                type: string
-                format: binary
+                type: array
+                items:
+                  $ref: '#/components/schemas/DocumentExportResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/document-exports/{id}:
+    get:
+      summary: Suivre le statut d'un export asynchrone (PENDING → SUCCESS/FAILED)
+      tags: [Transcripts & Exports]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Statut courant de l'export
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentExportResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Export non trouvé
+
+  /api/document-exports/graduates:
+    post:
+      summary: Générer l'export Excel des étudiants diplômés d'une promotion sur 3 ans (ADMIN uniquement)
+      tags: [Transcripts & Exports]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [promotionId]
+              properties:
+                promotionId:
+                  type: string
+                  format: uuid
+      responses:
+        '202':
+          description: Génération de l'export Excel initiée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentExportResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
 
 components:
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Saisissez le token JWT généré par l'endpoint /api/auth/login
+
+  responses:
+    UnauthorizedError:
+      description: Non authentifié
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ForbiddenError:
+      description: Accès interdit
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
   schemas:
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, example: "user@hei.school" }
+        password: { type: string, format: password, example: "MotDePasse123!" }
+
+    LoginResponse:
+      type: object
+      properties:
+        token: { type: string, example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." }
+        role: { type: string, enum: [STUDENT, TEACHER, ADMIN] }
+
+    CreateStudentRequest:
+      type: object
+      required: [email, password, firstName, lastName, stdNumber]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+        firstName: { type: string }
+        lastName: { type: string }
+        stdNumber: { type: string, example: "STD21001" }
+
+    CreateTeacherRequest:
+      type: object
+      required: [email, password, firstName, lastName, speciality]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+        firstName: { type: string }
+        lastName: { type: string }
+        speciality: { type: string }
+
+    CreateGroupRequest:
+      type: object
+      required: [name, promotionId, parcours]
+      properties:
+        name: { type: string, example: "H1" }
+        promotionId: { type: string, format: uuid }
+        parcours:
+          type: string
+          enum: [COMMON, EL, TN]
+          description: Porté par le groupe dans le MCD final (plus par l'inscription).
+
+    ErrorResponse:
+      type: object
+      properties:
+        statusCode: { type: integer, example: 403 }
+        message: { type: string }
+        timestamp: { type: string, format: date-time }
+
     UserResponse:
       type: object
       properties:
-        id:
-          type: string
-          format: uuid
-        email:
-          type: string
-          format: email
-        firstName:
-          type: string
-        lastName:
-          type: string
-        role:
-          type: string
-          enum: [STUDENT, TEACHER, ADMIN]
+        id: { type: string, format: uuid }
+        email: { type: string }
+        firstName: { type: string }
+        lastName: { type: string }
+        role: { type: string, enum: [STUDENT, TEACHER, ADMIN] }
+
+    AcademicYearRequest:
+      type: object
+      required: [label, dateDebut, dateFin, isCurrent]
+      properties:
+        label: { type: string, example: "2025-2026" }
+        dateDebut: { type: string, format: date }
+        dateFin: { type: string, format: date }
+        isCurrent: { type: boolean }
+
+    AcademicYearResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        label: { type: string, example: "2025-2026" }
+        dateDebut: { type: string, format: date }
+        dateFin: { type: string, format: date }
+        isCurrent: { type: boolean }
 
     StudentResponse:
       type: object
       properties:
-        id:
-          type: string
-          format: uuid
-        stdNumber:
-          type: string
-          example: "STD21001"
-        firstName:
-          type: string
-        lastName:
-          type: string
-        email:
-          type: string
+        id: { type: string, format: uuid }
+        userId: { type: string, format: uuid }
+        stdNumber: { type: string, example: "STD21001" }
+        firstName: { type: string }
+        lastName: { type: string }
+        email: { type: string }
+
+    TeacherResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        userId: { type: string, format: uuid }
+        speciality: { type: string }
+        firstName: { type: string }
+        lastName: { type: string }
 
     PromotionResponse:
       type: object
       properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-          example: "Promotion K"
-        year:
-          type: integer
-          example: 2026
+        id: { type: string, format: uuid }
+        name: { type: string }
+        year: { type: integer }
 
     GroupResponse:
       type: object
       properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-          example: "K1"
-        promotionId:
-          type: string
-          format: uuid
-
-    EnrollmentRequest:
-      type: object
-      required: [studentId, groupId, semester, parcours, academicYear]
-      properties:
-        studentId:
-          type: string
-          format: uuid
-        groupId:
-          type: string
-          format: uuid
-        semester:
-          type: string
-          enum: [S1, S2, S3, S4, S5, S6]
+        id: { type: string, format: uuid }
+        name: { type: string }
+        promotionId: { type: string, format: uuid }
         parcours:
           type: string
           enum: [COMMON, EL, TN]
-        academicYear:
-          type: string
-          example: "2025-2026"
+
+    SemesterResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        code: { type: string, enum: [S1, S2, S3, S4, S5, S6] }
+        level: { type: string, enum: [L1, L2, L3] }
+        orderNum: { type: integer }
+
+    EnrollmentRequest:
+      type: object
+      required: [studentId, groupId, semesterId, academicYearId, dateDebut]
+      properties:
+        studentId: { type: string, format: uuid }
+        groupId: { type: string, format: uuid }
+        semesterId: { type: string, format: uuid }
+        academicYearId: { type: string, format: uuid }
+        dateDebut: { type: string, format: date }
+        dateFin: { type: string, format: date, nullable: true }
+
+    EnrollmentResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        studentId: { type: string, format: uuid }
+        groupId: { type: string, format: uuid }
+        semesterId: { type: string, format: uuid }
+        academicYearId: { type: string, format: uuid }
+        dateDebut: { type: string, format: date }
+        dateFin: { type: string, format: date, nullable: true }
 
     CourseResponse:
       type: object
       properties:
-        id:
-          type: string
-          format: uuid
-        code:
-          type: string
-          example: "PROG4"
-        title:
-          type: string
-          example: "Programmation Java / Poja"
-        credits:
-          type: integer
-          example: 6
-        parcours:
-          type: string
-          enum: [COMMON, EL, TN]
+        id: { type: string, format: uuid }
+        code: { type: string }
+        title: { type: string }
+        credits: { type: integer }
+        parcours: { type: string, enum: [COMMON, EL, TN] }
+        semesterId: { type: string, format: uuid }
 
     CourseAssignmentRequest:
       type: object
-      required: [courseId, teacherId, groupId, academicYear]
+      required: [courseId, teacherId, academicYearId]
       properties:
-        courseId:
-          type: string
-          format: uuid
-        teacherId:
-          type: string
-          format: uuid
-        groupId:
-          type: string
-          format: uuid
-        academicYear:
-          type: string
-          example: "2025-2026"
+        courseId: { type: string, format: uuid }
+        teacherId: { type: string, format: uuid }
+        academicYearId: { type: string, format: uuid }
+
+    CourseAssignmentResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        courseId: { type: string, format: uuid }
+        teacherId: { type: string, format: uuid }
+        academicYearId: { type: string, format: uuid }
+
+    CourseAssignmentGroupRequest:
+      type: object
+      required: [groupId]
+      properties:
+        groupId: { type: string, format: uuid }
+
+    CourseAssignmentGroupResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        courseAssignmentId: { type: string, format: uuid }
+        groupId: { type: string, format: uuid }
 
     EvaluationRequest:
       type: object
-      required: [courseId, title, type, coefficient, dateEvaluation]
+      required: [courseAssignmentId, title, type, session, coefficient, dateEvaluation]
       properties:
-        courseId:
-          type: string
-          format: uuid
-        title:
-          type: string
-          example: "Examen Final"
-        type:
-          type: string
-          example: "EXAMEN"
-        coefficient:
-          type: number
-          format: double
-          example: 0.6
-        dateEvaluation:
-          type: string
-          format: date-time
+        courseAssignmentId: { type: string, format: uuid }
+        title: { type: string }
+        type: { type: string, example: "EXAMEN" }
+        session: { type: string, enum: [NORMAL, RATTRAPAGE] }
+        coefficient: { type: number, format: double }
+        dateEvaluation: { type: string, format: date-time }
+
+    EvaluationResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        courseAssignmentId: { type: string, format: uuid }
+        title: { type: string }
+        type: { type: string }
+        session: { type: string, enum: [NORMAL, RATTRAPAGE] }
+        coefficient: { type: number }
+        dateEvaluation: { type: string, format: date-time }
 
     GradeRequest:
       type: object
       required: [studentId, evaluationId, score]
       properties:
-        studentId:
-          type: string
-          format: uuid
-        evaluationId:
-          type: string
-          format: uuid
-        score:
-          type: number
-          format: double
-          example: 14.5
+        studentId: { type: string, format: uuid }
+        evaluationId: { type: string, format: uuid }
+        score: { type: number, format: double }
 
     GradeUpdateRequest:
       type: object
       required: [score, modifiedByUserId, reason]
       properties:
-        score:
-          type: number
-          format: double
-          example: 15.0
-        modifiedByUserId:
-          type: string
-          format: uuid
-        reason:
-          type: string
-          example: "Réclamation étudiant - Correction erreur"
+        score: { type: number, format: double }
+        modifiedByUserId: { type: string, format: uuid }
+        reason: { type: string }
+
+    GradeResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        studentId: { type: string, format: uuid }
+        evaluationId: { type: string, format: uuid }
+        score: { type: number }
+        published:
+          type: boolean
+          description: false = brouillon (visible enseignant seulement), true = visible étudiant.
+        publishedAt: { type: string, format: date-time, nullable: true }
 
     GradeHistoryResponse:
       type: object
       properties:
-        id:
-          type: string
-          format: uuid
-        gradeId:
-          type: string
-          format: uuid
-        oldValue:
-          type: number
-        newValue:
-          type: number
-        modifiedBy:
-          type: string
-        modifiedAt:
+        id: { type: string, format: uuid }
+        gradeId: { type: string, format: uuid }
+        oldValue: { type: number }
+        newValue: { type: number }
+        modifiedBy: { type: string, format: uuid }
+        modifiedAt: { type: string, format: date-time }
+        reason: { type: string }
+
+    CourseValidationRequest:
+      type: object
+      required: [studentId, courseId, academicYearId, finalAverage, validated, creditsObtained, session]
+      properties:
+        studentId: { type: string, format: uuid }
+        courseId: { type: string, format: uuid }
+        academicYearId: { type: string, format: uuid }
+        finalAverage: { type: number, format: double }
+        validated: { type: boolean }
+        creditsObtained: { type: integer }
+        session: { type: string, enum: [NORMAL, RATTRAPAGE] }
+
+    CourseValidationResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        studentId: { type: string, format: uuid }
+        courseId: { type: string, format: uuid }
+        academicYearId: { type: string, format: uuid }
+        finalAverage: { type: number }
+        validated: { type: boolean }
+        creditsObtained: { type: integer }
+        session: { type: string, enum: [NORMAL, RATTRAPAGE] }
+        computedAt:
           type: string
           format: date-time
-        reason:
-          type: string
+          description: Horodatage du dernier (re)calcul - table cache, pas source de vérité.
 
     TranscriptResponse:
       type: object
       properties:
-        studentStd:
-          type: string
-        studentName:
-          type: string
-        semester:
-          type: string
-        parcours:
-          type: string
-        generalAverage:
-          type: number
-        totalValidatedCredits:
+        studentStd: { type: string }
+        studentName: { type: string }
+        semesterCode: { type: string }
+        parcours: { type: string }
+        generalAverage: { type: number }
+        totalValidatedCredits: { type: integer }
+        isGraduated: { type: boolean }
+
+    GraduationStatusResponse:
+      type: object
+      properties:
+        studentStd: { type: string, example: "STD21001" }
+        totalCreditsRequired:
           type: integer
-        isGraduated:
-          type: boolean
+          example: 180
+          description: 60 crédits x L1/L2/L3
+        totalCreditsValidated: { type: integer }
+        creditsByLevel:
+          type: object
+          properties:
+            L1: { type: integer }
+            L2: { type: integer }
+            L3: { type: integer }
+        isGraduated: { type: boolean }
+
+    DocumentExportResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        studentId: { type: string, format: uuid, nullable: true }
+        promotionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Renseigné pour les exports GRADUATES_EXCEL, absent pour un TRANSCRIPT_PDF.
+        academicYearId: { type: string, format: uuid }
+        docType: { type: string, enum: [TRANSCRIPT_PDF, GRADUATES_EXCEL] }
+        s3Key: { type: string }
+        status: { type: string, enum: [PENDING, SUCCESS, FAILED] }
+        generatedAt: { type: string, format: date-time }
+        sentAt: { type: string, format: date-time, nullable: true }
