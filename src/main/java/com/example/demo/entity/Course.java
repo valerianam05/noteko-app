@@ -6,26 +6,31 @@ import java.util.UUID;
 import lombok.*;
 
 @Entity
-@Table(name = "academic_group")
+@Table(name = "course")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AcademicGroup {
-
+public class Course {
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 
-  @Column(nullable = false, length = 50)
-  private String name; // "K1", "K2", "K3"
+  @Column(name = "code", nullable = false, unique = true)
+  private String code;
+
+  @Column(name = "title", nullable = false)
+  private String title;
+
+  @Column(name = "credits", nullable = false)
+  private Integer credits;
 
   @Enumerated(EnumType.STRING)
-  @Column(nullable = false, length = 20)
+  @Column(name = "parcours", nullable = false)
   private Parcours parcours;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "promotion_id")
-  private Promotion promotion;
+  @JoinColumn(name = "semester_id")
+  private Semester semester;
 }

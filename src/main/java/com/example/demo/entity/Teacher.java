@@ -1,22 +1,25 @@
 package com.example.demo.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
 import java.util.UUID;
+import lombok.*;
 
 @Entity
 @Table(name = "teacher")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Teacher {
 
-    @Id
-    private UUID userId;
+  @Id private UUID userId;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @MapsId
-    @JoinColumn(name = "user_id")
-    private AppUser appUser;
+  @OneToOne(fetch = FetchType.LAZY)
+  @MapsId
+  @JoinColumn(name = "user_id")
+  private AppUser appUser;
 
-    @Column(length = 150)
-    private String specialite;
+  @Column(length = 150)
+  private String specialite;
 }

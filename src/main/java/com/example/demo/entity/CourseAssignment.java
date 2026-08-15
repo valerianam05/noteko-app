@@ -1,42 +1,30 @@
 package com.example.demo.entity;
 
 import jakarta.persistence.*;
-import java.time.LocalDate;
 import java.util.UUID;
 import lombok.*;
 
 @Entity
-@Table(name = "student_enrollment")
+@Table(name = "course_assignment")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class StudentEnrollment {
-
+public class CourseAssignment {
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "student_id")
-  private Student student;
+  @JoinColumn(name = "course_id")
+  private Course course;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "group_id")
-  private AcademicGroup group;
-
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "semester_id")
-  private Semester semester;
+  @JoinColumn(name = "teacher_id")
+  private Teacher teacher;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "academic_year_id")
   private AcademicYear academicYear;
-
-  @Column(name = "date_debut")
-  private LocalDate dateDebut;
-
-  @Column(name = "date_fin")
-  private LocalDate dateFin;
 }
