@@ -12,6 +12,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class Grade {
+
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
@@ -26,4 +27,8 @@ public class Grade {
 
   @Column(name = "score", nullable = false)
   private Double score;
+
+  @Column(name = "published", nullable = false)
+  @Builder.Default
+  private Boolean published = false;
 }

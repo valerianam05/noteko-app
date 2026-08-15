@@ -19,8 +19,8 @@ public class Evaluation {
   private UUID id;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "course_id")
-  private Course course;
+  @JoinColumn(name = "course_assignment_id")
+  private CourseAssignment courseAssignment;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "academic_year_id")
