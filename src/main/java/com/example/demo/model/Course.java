@@ -18,6 +18,6 @@ public class Course {
   private Parcours parcours;
 
   public boolean isValidCredits() {
-    return credits != null && credits > 0 && credits <= 30;
+    return credits != null && credits > 0 && credits <= 20;
   }
 }
