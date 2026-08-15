@@ -1,10 +1,21 @@
 package com.example.demo.entity;
 
 import com.example.demo.entity.enums.UserRole;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.UUID;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "app_user")
@@ -23,7 +34,7 @@ public class AppUser {
   private String email;
 
   @Column(nullable = false)
-  private String password; // hash BCrypt
+  private String password;
 
   @Column(name = "first_name", nullable = false, length = 100)
   private String firstName;
