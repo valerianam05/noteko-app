@@ -1,4 +1,4 @@
-package com.example.demo.dto;
+package com.example.demo.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -14,7 +14,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TeacherRegistrationForm {
+public class TeacherCreateRequest {
 
     @NotBlank(message = "L'email est obligatoire")
     @Email(message = "Format d'email invalide")
@@ -30,5 +30,5 @@ public class TeacherRegistrationForm {
     @NotBlank(message = "Le nom est obligatoire")
     private String lastName;
 
-    private String specialite; // optionnel
+    private String specialite;
 }

@@ -1,4 +1,4 @@
-package com.example.demo.dto;
+package com.example.demo.dto.request;
 
 import com.example.demo.entity.enums.Parcours;
 import jakarta.validation.constraints.NotBlank;
@@ -15,7 +15,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AcademicGroupForm {
+public class AcademicGroupRequest {
 
     @NotBlank(message = "Le nom du groupe est obligatoire")
     private String name;

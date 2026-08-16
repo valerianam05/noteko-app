@@ -1,4 +1,4 @@
-package com.example.demo.dto;
+package com.example.demo.dto.request;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -13,7 +13,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class StudentEnrollmentForm {
+public class StudentEnrollmentRequest {
 
     @NotNull(message = "L'étudiant est obligatoire")
     private UUID studentId;
