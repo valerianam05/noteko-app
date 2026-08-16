@@ -17,25 +17,29 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class StudentController {
 
-    private final StudentService studentService;
-    private final StudentMapper studentMapper;
+  private final StudentService studentService;
+  private final StudentMapper studentMapper;
 
-    @GetMapping
-    public List<StudentResponse> list() {
-        return studentService.findAll().stream().map(studentMapper::toResponse).toList();
-    }
+  @GetMapping
+  public List<StudentResponse> list() {
+    return studentService.findAll().stream().map(studentMapper::toResponse).toList();
+  }
 
-    @GetMapping("/{id}")
-    public StudentResponse detail(@PathVariable UUID id) {
-        return studentMapper.toResponse(studentService.findById(id));
-    }
+  @GetMapping("/{id}")
+  public StudentResponse detail(@PathVariable UUID id) {
+    return studentMapper.toResponse(studentService.findById(id));
+  }
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public StudentResponse create(@Valid @RequestBody StudentCreateRequest request) {
-        Student student = studentService.create(
-                request.email(), request.password(),
-                request.firstName(), request.lastName(), request.stdNumber());
-        return studentMapper.toResponse(student);
-    }
+  @PostMapping
+  @ResponseStatus(HttpStatus.CREATED)
+  public StudentResponse create(@Valid @RequestBody StudentCreateRequest request) {
+    Student student =
+        studentService.create(
+            request.email(),
+            request.password(),
+            request.firstName(),
+            request.lastName(),
+            request.stdNumber());
+    return studentMapper.toResponse(student);
+  }
 }

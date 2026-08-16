@@ -17,20 +17,21 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AcademicGroupController {
 
-    private final AcademicGroupService academicGroupService;
-    private final AcademicGroupMapper academicGroupMapper;
+  private final AcademicGroupService academicGroupService;
+  private final AcademicGroupMapper academicGroupMapper;
 
-    @GetMapping
-    public List<AcademicGroupResponse> list(@RequestParam UUID promotionId) {
-        return academicGroupService.findByPromotion(promotionId).stream()
-                .map(academicGroupMapper::toResponse).toList();
-    }
+  @GetMapping
+  public List<AcademicGroupResponse> list(@RequestParam UUID promotionId) {
+    return academicGroupService.findByPromotion(promotionId).stream()
+        .map(academicGroupMapper::toResponse)
+        .toList();
+  }
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public AcademicGroupResponse create(@Valid @RequestBody AcademicGroupRequest request) {
-        AcademicGroup group = academicGroupService.create(
-                request.name(), request.parcours(), request.promotionId());
-        return academicGroupMapper.toResponse(group);
-    }
+  @PostMapping
+  @ResponseStatus(HttpStatus.CREATED)
+  public AcademicGroupResponse create(@Valid @RequestBody AcademicGroupRequest request) {
+    AcademicGroup group =
+        academicGroupService.create(request.name(), request.parcours(), request.promotionId());
+    return academicGroupMapper.toResponse(group);
+  }
 }

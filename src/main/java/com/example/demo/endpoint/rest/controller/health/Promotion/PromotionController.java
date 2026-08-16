@@ -17,23 +17,23 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class PromotionController {
 
-    private final PromotionService promotionService;
-    private final PromotionMapper promotionMapper;
+  private final PromotionService promotionService;
+  private final PromotionMapper promotionMapper;
 
-    @GetMapping
-    public List<PromotionResponse> list() {
-        return promotionService.findAll().stream().map(promotionMapper::toResponse).toList();
-    }
+  @GetMapping
+  public List<PromotionResponse> list() {
+    return promotionService.findAll().stream().map(promotionMapper::toResponse).toList();
+  }
 
-    @GetMapping("/{id}")
-    public PromotionResponse detail(@PathVariable UUID id) {
-        return promotionMapper.toResponse(promotionService.findById(id));
-    }
+  @GetMapping("/{id}")
+  public PromotionResponse detail(@PathVariable UUID id) {
+    return promotionMapper.toResponse(promotionService.findById(id));
+  }
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public PromotionResponse create(@Valid @RequestBody PromotionRequest request) {
-        Promotion promotion = promotionService.create(request.name(), request.year());
-        return promotionMapper.toResponse(promotion);
-    }
+  @PostMapping
+  @ResponseStatus(HttpStatus.CREATED)
+  public PromotionResponse create(@Valid @RequestBody PromotionRequest request) {
+    Promotion promotion = promotionService.create(request.name(), request.year());
+    return promotionMapper.toResponse(promotion);
+  }
 }

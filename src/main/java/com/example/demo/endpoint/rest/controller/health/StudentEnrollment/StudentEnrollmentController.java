@@ -16,21 +16,23 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class StudentEnrollmentController {
 
-    private final StudentEnrollmentService studentEnrollmentService;
-    private final StudentEnrollmentMapper studentEnrollmentMapper;
+  private final StudentEnrollmentService studentEnrollmentService;
+  private final StudentEnrollmentMapper studentEnrollmentMapper;
 
-    @GetMapping
-    public List<StudentEnrollmentResponse> list(@RequestParam UUID studentId) {
-        return studentEnrollmentService.findByStudent(studentId).stream()
-                .map(studentEnrollmentMapper::toResponse).toList();
-    }
+  @GetMapping
+  public List<StudentEnrollmentResponse> list(@RequestParam UUID studentId) {
+    return studentEnrollmentService.findByStudent(studentId).stream()
+        .map(studentEnrollmentMapper::toResponse)
+        .toList();
+  }
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public StudentEnrollmentResponse create(@Valid @RequestBody StudentEnrollmentRequest request) {
-        var enrollment = studentEnrollmentService.enroll(
-                request.studentId(), request.groupId(),
-                request.semesterId(), request.academicYearId());
-        return studentEnrollmentMapper.toResponse(enrollment);
-    }
+  @PostMapping
+  @ResponseStatus(HttpStatus.CREATED)
+  public StudentEnrollmentResponse create(@Valid @RequestBody StudentEnrollmentRequest request) {
+    var enrollment =
+        studentEnrollmentService.enroll(
+            request.studentId(), request.groupId(),
+            request.semesterId(), request.academicYearId());
+    return studentEnrollmentMapper.toResponse(enrollment);
+  }
 }
