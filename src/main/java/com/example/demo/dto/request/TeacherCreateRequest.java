@@ -16,19 +16,19 @@ import lombok.Setter;
 @Builder
 public class TeacherCreateRequest {
 
-    @NotBlank(message = "L'email est obligatoire")
-    @Email(message = "Format d'email invalide")
-    private String email;
+  @NotBlank(message = "L'email est obligatoire")
+  @Email(message = "Format d'email invalide")
+  private String email;
 
-    @NotBlank(message = "Le mot de passe est obligatoire")
-    @Size(min = 8, message = "Le mot de passe doit contenir au moins 8 caractères")
-    private String password;
+  @NotBlank(message = "Le mot de passe est obligatoire")
+  @Size(min = 8, message = "Le mot de passe doit contenir au moins 8 caractères")
+  private String password;
 
-    @NotBlank(message = "Le prénom est obligatoire")
-    private String firstName;
+  @NotBlank(message = "Le prénom est obligatoire")
+  private String firstName;
 
-    @NotBlank(message = "Le nom est obligatoire")
-    private String lastName;
+  @NotBlank(message = "Le nom est obligatoire")
+  private String lastName;
 
-    private String specialite;
+  private String specialite;
 }

@@ -7,11 +7,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class AcademicGroupMapper {
 
-    public AcademicGroupResponse toResponse(AcademicGroup group) {
-        return new AcademicGroupResponse(
-                group.getId(),
-                group.getName(),
-                group.getParcours(),
-                group.getPromotion().getName());
-    }
+  public AcademicGroupResponse toResponse(AcademicGroup group) {
+    return new AcademicGroupResponse(
+        group.getId(), group.getName(), group.getParcours(), group.getPromotion().getName());
+  }
 }

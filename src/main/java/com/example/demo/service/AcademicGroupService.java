@@ -16,29 +16,27 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class AcademicGroupService {
 
-    private final AcademicGroupRepository academicGroupRepository;
-    private final PromotionService promotionService;
+  private final AcademicGroupRepository academicGroupRepository;
+  private final PromotionService promotionService;
 
-    public List<AcademicGroup> findByPromotion(UUID promotionId) {
-        return academicGroupRepository.findByPromotionId(promotionId);
-    }
+  public List<AcademicGroup> findByPromotion(UUID promotionId) {
+    return academicGroupRepository.findByPromotionId(promotionId);
+  }
 
-    public List<AcademicGroup> findByPromotionAndParcours(UUID promotionId, Parcours parcours) {
-        return academicGroupRepository.findByPromotionIdAndParcours(promotionId, parcours);
-    }
+  public List<AcademicGroup> findByPromotionAndParcours(UUID promotionId, Parcours parcours) {
+    return academicGroupRepository.findByPromotionIdAndParcours(promotionId, parcours);
+  }
 
-    public AcademicGroup findById(UUID id) {
-        return academicGroupRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable : " + id));
-    }
+  public AcademicGroup findById(UUID id) {
+    return academicGroupRepository
+        .findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable : " + id));
+  }
 
-    public AcademicGroup create(String name, Parcours parcours, UUID promotionId) {
-        Promotion promotion = promotionService.findById(promotionId);
-        AcademicGroup group = AcademicGroup.builder()
-                .name(name)
-                .parcours(parcours)
-                .promotion(promotion)
-                .build();
-        return academicGroupRepository.save(group);
-    }
+  public AcademicGroup create(String name, Parcours parcours, UUID promotionId) {
+    Promotion promotion = promotionService.findById(promotionId);
+    AcademicGroup group =
+        AcademicGroup.builder().name(name).parcours(parcours).promotion(promotion).build();
+    return academicGroupRepository.save(group);
+  }
 }

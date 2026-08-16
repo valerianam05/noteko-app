@@ -14,22 +14,20 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class PromotionService {
 
-    private final PromotionRepository promotionRepository;
+  private final PromotionRepository promotionRepository;
 
-    public List<Promotion> findAll() {
-        return promotionRepository.findAllByOrderByYearDesc();
-    }
+  public List<Promotion> findAll() {
+    return promotionRepository.findAllByOrderByYearDesc();
+  }
 
-    public Promotion findById(UUID id) {
-        return promotionRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Promotion introuvable : " + id));
-    }
+  public Promotion findById(UUID id) {
+    return promotionRepository
+        .findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Promotion introuvable : " + id));
+  }
 
-    public Promotion create(String name, Integer year) {
-        Promotion promotion = Promotion.builder()
-                .name(name)
-                .year(year)
-                .build();
-        return promotionRepository.save(promotion);
-    }
+  public Promotion create(String name, Integer year) {
+    Promotion promotion = Promotion.builder().name(name).year(year).build();
+    return promotionRepository.save(promotion);
+  }
 }

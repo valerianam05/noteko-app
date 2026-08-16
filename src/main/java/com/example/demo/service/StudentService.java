@@ -17,33 +17,34 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class StudentService {
 
-    private final StudentRepository studentRepository;
-    private final AppUserService appUserService;
+  private final StudentRepository studentRepository;
+  private final AppUserService appUserService;
 
-    public List<Student> findAll() {
-        return studentRepository.findAll();
-    }
+  public List<Student> findAll() {
+    return studentRepository.findAll();
+  }
 
-    public Student findById(UUID id) {
-        return studentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Étudiant introuvable : " + id));
-    }
+  public Student findById(UUID id) {
+    return studentRepository
+        .findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Étudiant introuvable : " + id));
+  }
 
-    public Student findByStdNumber(String stdNumber) {
-        return studentRepository.findByStdNumber(stdNumber)
-                .orElseThrow(() -> new ResourceNotFoundException("Étudiant introuvable, matricule : " + stdNumber));
-    }
+  public Student findByStdNumber(String stdNumber) {
+    return studentRepository
+        .findByStdNumber(stdNumber)
+        .orElseThrow(
+            () -> new ResourceNotFoundException("Étudiant introuvable, matricule : " + stdNumber));
+  }
 
-    public Student create(String email, String rawPassword, String firstName,
-                          String lastName, String stdNumber) {
-        if (studentRepository.existsByStdNumber(stdNumber)) {
-            throw new ConflictException("Ce matricule est déjà utilisé : " + stdNumber);
-        }
-        AppUser appUser = appUserService.create(email, rawPassword, firstName, lastName, UserRole.STUDENT);
-        Student student = Student.builder()
-                .appUser(appUser)
-                .stdNumber(stdNumber)
-                .build();
-        return studentRepository.save(student);
+  public Student create(
+      String email, String rawPassword, String firstName, String lastName, String stdNumber) {
+    if (studentRepository.existsByStdNumber(stdNumber)) {
+      throw new ConflictException("Ce matricule est déjà utilisé : " + stdNumber);
     }
+    AppUser appUser =
+        appUserService.create(email, rawPassword, firstName, lastName, UserRole.STUDENT);
+    Student student = Student.builder().appUser(appUser).stdNumber(stdNumber).build();
+    return studentRepository.save(student);
+  }
 }

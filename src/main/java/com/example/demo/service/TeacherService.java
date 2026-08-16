@@ -16,25 +16,24 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class TeacherService {
 
-    private final TeacherRepository teacherRepository;
-    private final AppUserService appUserService;
+  private final TeacherRepository teacherRepository;
+  private final AppUserService appUserService;
 
-    public List<Teacher> findAll() {
-        return teacherRepository.findAll();
-    }
+  public List<Teacher> findAll() {
+    return teacherRepository.findAll();
+  }
 
-    public Teacher findById(UUID id) {
-        return teacherRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Enseignant introuvable : " + id));
-    }
+  public Teacher findById(UUID id) {
+    return teacherRepository
+        .findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Enseignant introuvable : " + id));
+  }
 
-    public Teacher create(String email, String rawPassword, String firstName,
-                          String lastName, String specialite) {
-        AppUser appUser = appUserService.create(email, rawPassword, firstName, lastName, UserRole.TEACHER);
-        Teacher teacher = Teacher.builder()
-                .appUser(appUser)
-                .specialite(specialite)
-                .build();
-        return teacherRepository.save(teacher);
-    }
+  public Teacher create(
+      String email, String rawPassword, String firstName, String lastName, String specialite) {
+    AppUser appUser =
+        appUserService.create(email, rawPassword, firstName, lastName, UserRole.TEACHER);
+    Teacher teacher = Teacher.builder().appUser(appUser).specialite(specialite).build();
+    return teacherRepository.save(teacher);
+  }
 }

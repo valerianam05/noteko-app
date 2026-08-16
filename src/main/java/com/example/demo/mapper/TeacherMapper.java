@@ -7,11 +7,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class TeacherMapper {
 
-    public TeacherResponse toResponse(Teacher teacher) {
-        return new TeacherResponse(
-                teacher.getUserId(),
-                teacher.getAppUser().getFirstName() + " " + teacher.getAppUser().getLastName(),
-                teacher.getAppUser().getEmail(),
-                teacher.getSpecialite());
-    }
+  public TeacherResponse toResponse(Teacher teacher) {
+    return new TeacherResponse(
+        teacher.getUserId(),
+        teacher.getAppUser().getFirstName() + " " + teacher.getAppUser().getLastName(),
+        teacher.getAppUser().getEmail(),
+        teacher.getSpecialite());
+  }
 }

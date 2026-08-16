@@ -15,19 +15,21 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class SemesterService {
 
-    private final SemesterRepository semesterRepository;
+  private final SemesterRepository semesterRepository;
 
-    public List<Semester> findAllOrdered() {
-        return semesterRepository.findAllByOrderByOrderNumAsc();
-    }
+  public List<Semester> findAllOrdered() {
+    return semesterRepository.findAllByOrderByOrderNumAsc();
+  }
 
-    public Semester findById(UUID id) {
-        return semesterRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Semestre introuvable : " + id));
-    }
+  public Semester findById(UUID id) {
+    return semesterRepository
+        .findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Semestre introuvable : " + id));
+  }
 
-    public Semester findByCode(SemesterCode code) {
-        return semesterRepository.findByCode(code)
-                .orElseThrow(() -> new ResourceNotFoundException("Semestre introuvable : " + code));
-    }
+  public Semester findByCode(SemesterCode code) {
+    return semesterRepository
+        .findByCode(code)
+        .orElseThrow(() -> new ResourceNotFoundException("Semestre introuvable : " + code));
+  }
 }

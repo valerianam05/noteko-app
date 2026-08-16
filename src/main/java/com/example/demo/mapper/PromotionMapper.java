@@ -7,10 +7,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class PromotionMapper {
 
-    public PromotionResponse toResponse(Promotion promotion) {
-        return new PromotionResponse(
-                promotion.getId(),
-                promotion.getName(),
-                promotion.getYear());
-    }
+  public PromotionResponse toResponse(Promotion promotion) {
+    return new PromotionResponse(promotion.getId(), promotion.getName(), promotion.getYear());
+  }
 }

@@ -16,10 +16,10 @@ import lombok.Setter;
 @Builder
 public class PromotionRequest {
 
-    @NotBlank(message = "Le nom de la promotion est obligatoire")
-    private String name;
+  @NotBlank(message = "Le nom de la promotion est obligatoire")
+  private String name;
 
-    @NotNull(message = "L'année est obligatoire")
-    @Min(value = 2000, message = "Année invalide")
-    private Integer year;
+  @NotNull(message = "L'année est obligatoire")
+  @Min(value = 2000, message = "Année invalide")
+  private Integer year;
 }

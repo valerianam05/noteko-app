@@ -1,12 +1,12 @@
 package com.example.demo.dto.request;
 
 import jakarta.validation.constraints.NotNull;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import java.util.UUID;
 
 @Getter
 @Setter
@@ -15,15 +15,15 @@ import java.util.UUID;
 @Builder
 public class StudentEnrollmentRequest {
 
-    @NotNull(message = "L'étudiant est obligatoire")
-    private UUID studentId;
+  @NotNull(message = "L'étudiant est obligatoire")
+  private UUID studentId;
 
-    @NotNull(message = "Le groupe est obligatoire")
-    private UUID groupId;
+  @NotNull(message = "Le groupe est obligatoire")
+  private UUID groupId;
 
-    @NotNull(message = "Le semestre est obligatoire")
-    private UUID semesterId;
+  @NotNull(message = "Le semestre est obligatoire")
+  private UUID semesterId;
 
-    @NotNull(message = "L'année universitaire est obligatoire")
-    private UUID academicYearId;
+  @NotNull(message = "L'année universitaire est obligatoire")
+  private UUID academicYearId;
 }

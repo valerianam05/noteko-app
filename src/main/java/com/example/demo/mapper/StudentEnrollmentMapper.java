@@ -7,15 +7,16 @@ import org.springframework.stereotype.Component;
 @Component
 public class StudentEnrollmentMapper {
 
-    public StudentEnrollmentResponse toResponse(StudentEnrollment enrollment) {
-        return new StudentEnrollmentResponse(
-                enrollment.getId(),
-                enrollment.getStudent().getAppUser().getFirstName() + " "
-                        + enrollment.getStudent().getAppUser().getLastName(),
-                enrollment.getGroup().getName(),
-                enrollment.getSemester().getCode().name(),
-                enrollment.getAcademicYear().getLabel(),
-                enrollment.getDateDebut(),
-                enrollment.getDateFin());
-    }
+  public StudentEnrollmentResponse toResponse(StudentEnrollment enrollment) {
+    return new StudentEnrollmentResponse(
+        enrollment.getId(),
+        enrollment.getStudent().getAppUser().getFirstName()
+            + " "
+            + enrollment.getStudent().getAppUser().getLastName(),
+        enrollment.getGroup().getName(),
+        enrollment.getSemester().getCode().name(),
+        enrollment.getAcademicYear().getLabel(),
+        enrollment.getDateDebut(),
+        enrollment.getDateFin());
+  }
 }

@@ -7,10 +7,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class AcademicYearMapper {
 
-    public AcademicYearResponse toResponse(AcademicYear academicYear) {
-        return new AcademicYearResponse(
-                academicYear.getId(),
-                academicYear.getLabel(),
-                academicYear.isCurrent());
-    }
+  public AcademicYearResponse toResponse(AcademicYear academicYear) {
+    return new AcademicYearResponse(
+        academicYear.getId(), academicYear.getLabel(), academicYear.isCurrent());
+  }
 }
