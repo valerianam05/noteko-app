@@ -1,16 +1,17 @@
 package com.example.demo.exception;
 
-import java.nio.file.AccessDeniedException;
 import java.util.List;
-import org.apache.tomcat.websocket.AuthenticationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -67,5 +68,13 @@ public class GlobalExceptionHandler {
     ErrorResponse body =
         ErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR.value(), "An unexpected error occurred");
     return ResponseEntity.internalServerError().body(body);
+  }
+
+  @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+  public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+    log.warn("Type mismatch: {}", ex.getMessage());
+    String message = "Invalid value for parameter '%s'".formatted(ex.getName());
+    ErrorResponse body = ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), message);
+    return ResponseEntity.badRequest().body(body);
   }
 }
