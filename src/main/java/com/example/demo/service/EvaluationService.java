@@ -46,13 +46,8 @@ public class EvaluationService {
         Evaluation.builder()
             .courseAssignment(courseAssignment)
             .title(request.title())
-            .type(
-                request.type() != null
-                    ? request.type().name()
-                    : null) // ✅ Convertir enum en String si l'entité attend un String
-            .coefficient(
-                request.weight()) // Si le champ s'appelle coefficient dans l'entité, remplace par
-            // .coefficient(request.weight())
+            .type(request.type() != null ? request.type().name() : null)
+            .coefficient(request.weight())
             .dateEvaluation(request.evaluationDate())
             .build();
 

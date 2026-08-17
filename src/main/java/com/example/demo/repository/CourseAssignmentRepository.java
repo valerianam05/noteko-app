@@ -9,5 +9,5 @@ public interface CourseAssignmentRepository extends JpaRepository<CourseAssignme
 
   List<CourseAssignment> findByTeacherUserId(UUID teacherUserId);
 
-  List<CourseAssignment> findBySubjectId(UUID subjectId);
+  List<CourseAssignment> findByCourse_Id(UUID courseId);
 }

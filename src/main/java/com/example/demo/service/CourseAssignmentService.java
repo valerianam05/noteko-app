@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional
 public class CourseAssignmentService {
+
   private final CourseAssignmentRepository courseAssignmentRepository;
 
   @Transactional(readOnly = true)
@@ -31,7 +32,7 @@ public class CourseAssignmentService {
   }
 
   @Transactional(readOnly = true)
-  public List<CourseAssignment> findBySubject(UUID subjectId) {
-    return courseAssignmentRepository.findBySubjectId(subjectId);
+  public List<CourseAssignment> findByCourse(UUID courseId) {
+    return courseAssignmentRepository.findByCourse_Id(courseId);
   }
 }
