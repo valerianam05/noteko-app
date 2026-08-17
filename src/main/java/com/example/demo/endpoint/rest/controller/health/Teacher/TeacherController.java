@@ -13,7 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/teachers")
+@RequestMapping("/api/teachers")
 @RequiredArgsConstructor
 public class TeacherController {
 

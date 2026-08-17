@@ -11,7 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/academic-years")
+@RequestMapping("/api/academic-years")
 @RequiredArgsConstructor
 public class AcademicYearController {
 
