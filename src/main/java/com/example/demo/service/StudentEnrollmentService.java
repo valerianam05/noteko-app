@@ -6,6 +6,7 @@ import com.example.demo.entity.Semester;
 import com.example.demo.entity.Student;
 import com.example.demo.entity.StudentEnrollment;
 import com.example.demo.exception.ConflictException;
+import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.StudentEnrollmentRepository;
 import java.time.LocalDate;
 import java.util.List;
@@ -27,6 +28,10 @@ public class StudentEnrollmentService {
 
   public List<StudentEnrollment> findByStudent(UUID studentId) {
     return studentEnrollmentRepository.findByStudentUserIdOrderByAcademicYearIdAsc(studentId);
+  }
+
+  public List<StudentEnrollment> findActiveByGroup(UUID groupId) {
+    return studentEnrollmentRepository.findByGroupIdAndDateFinIsNull(groupId);
   }
 
   public StudentEnrollment enroll(
@@ -65,5 +70,15 @@ public class StudentEnrollmentService {
               precedente.setDateFin(LocalDate.now());
               studentEnrollmentRepository.save(precedente);
             });
+  }
+
+  public StudentEnrollment close(UUID enrollmentId, LocalDate dateFin) {
+    StudentEnrollment enrollment =
+        studentEnrollmentRepository
+            .findById(enrollmentId)
+            .orElseThrow(
+                () -> new ResourceNotFoundException("Inscription introuvable : " + enrollmentId));
+    enrollment.setDateFin(dateFin);
+    return studentEnrollmentRepository.save(enrollment);
   }
 }
