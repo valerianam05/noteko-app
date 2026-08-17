@@ -21,4 +21,6 @@ public interface GradeRepository extends JpaRepository<Grade, UUID> {
   Optional<Grade> findFirstByStudentUserIdAndEvaluationId(UUID studentUserId, UUID evaluationId);
 
   boolean existsByStudentUserIdAndEvaluationId(UUID studentUserId, UUID evaluationId);
+
+  List<Grade> findAllByEvaluationIdAndPublishedFalse(UUID evaluationId);
 }

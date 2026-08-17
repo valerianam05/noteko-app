@@ -2,7 +2,7 @@ package com.example.demo.entity;
 
 import com.example.demo.entity.enums.SessionType;
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 import lombok.*;
 
@@ -40,5 +40,5 @@ public class Evaluation {
   private Double coefficient;
 
   @Column(name = "date_evaluation", nullable = false)
-  private LocalDateTime dateEvaluation;
+  private OffsetDateTime dateEvaluation;
 }
