@@ -1,0 +1,44 @@
+package com.example.demo.security.exception;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.time.OffsetDateTime;
+import java.util.Map;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.stereotype.Component;
+
+@Component
+@RequiredArgsConstructor
+public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
+
+  private final ObjectMapper objectMapper;
+
+  @Override
+  public void commence(
+      HttpServletRequest request,
+      HttpServletResponse response,
+      AuthenticationException authException)
+      throws IOException {
+
+    response.setStatus(HttpStatus.UNAUTHORIZED.value());
+    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+
+    Map<String, Object> body =
+        Map.of(
+            "timestamp", OffsetDateTime.now().toString(),
+            "status", HttpStatus.UNAUTHORIZED.value(),
+            "error", "Non autorisé",
+            "message",
+                "Authentification requise pour accéder à cette ressource : "
+                    + authException.getMessage(),
+            "path", request.getRequestURI());
+
+    objectMapper.writeValue(response.getOutputStream(), body);
+  }
+}
