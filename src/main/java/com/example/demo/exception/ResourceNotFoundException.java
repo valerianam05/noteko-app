@@ -7,6 +7,10 @@ public class ResourceNotFoundException extends BusinessException {
     super(message, HttpStatus.NOT_FOUND);
   }
 
+  public ResourceNotFoundException(String resourceName, Object fieldValue) {
+    super("%s not found with id = '%s'".formatted(resourceName, fieldValue), HttpStatus.NOT_FOUND);
+  }
+
   public ResourceNotFoundException(String resourceName, String fieldName, Object fieldValue) {
     super(
         "%s not found with %s = '%s'".formatted(resourceName, fieldName, fieldValue),

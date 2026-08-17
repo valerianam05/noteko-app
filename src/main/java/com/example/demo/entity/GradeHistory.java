@@ -1,7 +1,7 @@
 package com.example.demo.entity;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 import lombok.*;
 
@@ -32,7 +32,7 @@ public class GradeHistory {
   private AppUser modifiedBy;
 
   @Column(name = "modified_at", nullable = false)
-  private LocalDateTime modifiedAt;
+  private OffsetDateTime modifiedAt;
 
   @Column(name = "reason", nullable = false)
   private String reason;

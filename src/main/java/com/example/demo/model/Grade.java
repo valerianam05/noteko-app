@@ -16,6 +16,7 @@ public class Grade {
   private Double score;
   private Boolean published;
   private OffsetDateTime createdAt;
+  private OffsetDateTime publishedAt;
 
   public boolean isValidScore() {
     return score != null && score >= 0.0 && score <= 20.0;

@@ -1,6 +1,7 @@
 package com.example.demo.entity;
 
 import jakarta.persistence.*;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 import lombok.*;
 
@@ -31,4 +32,7 @@ public class Grade {
   @Column(name = "published", nullable = false)
   @Builder.Default
   private Boolean published = false;
+
+  @Column(name = "published_at", nullable = false)
+  private OffsetDateTime publishedAt;
 }
