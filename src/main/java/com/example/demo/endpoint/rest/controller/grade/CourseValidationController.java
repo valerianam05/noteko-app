@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/course-validations")
 @RequiredArgsConstructor
 public class CourseValidationController {
+
   private final CourseValidationService courseValidationService;
 
   @GetMapping

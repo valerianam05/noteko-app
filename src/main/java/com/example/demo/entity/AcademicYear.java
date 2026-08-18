@@ -19,7 +19,7 @@ public class AcademicYear {
   private UUID id;
 
   @Column(nullable = false, unique = true, length = 9)
-  private String label; // généré automatiquement, ex: "2025-2026"
+  private String label;
 
   @Column(name = "date_debut", nullable = false)
   private LocalDate dateDebut;

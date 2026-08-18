@@ -37,4 +37,11 @@ public class DocumentExportController {
     DocumentExportResponse response = documentExportService.exportGraduates(request.promotionId());
     return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
   }
+
+  @PostMapping("/transcript/send-email")
+  public ResponseEntity<DocumentExportResponse> sendTranscriptEmail(
+      @PathVariable String std, @RequestParam(required = false) String semesterCode) {
+    DocumentExportResponse response = documentExportService.exportTranscriptPdf(std, semesterCode);
+    return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
+  }
 }
