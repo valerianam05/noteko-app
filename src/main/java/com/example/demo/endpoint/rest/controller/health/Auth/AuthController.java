@@ -1,4 +1,5 @@
 package com.example.demo.endpoint.rest.controller.health.Auth;
+
 import com.example.demo.dto.request.LoginRequest;
 import com.example.demo.dto.response.LoginResponse;
 import com.example.demo.service.AuthService;
@@ -12,14 +13,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-public class
+public class AuthController {
 
-AuthController {
+  private final AuthService authService;
 
-    private final AuthService authService;
-
-    @PostMapping("/login")
-    public LoginResponse login(@Valid @RequestBody LoginRequest request) {
-        return authService.login(request);
-    }
+  @PostMapping("/login")
+  public LoginResponse login(@Valid @RequestBody LoginRequest request) {
+    return authService.login(request);
+  }
 }
