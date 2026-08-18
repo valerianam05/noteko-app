@@ -22,4 +22,8 @@ public class Promotion {
 
   @Column(nullable = false)
   private Integer year;
+
+  @ManyToOne(optional = false)
+  @JoinColumn(name = "academic_year_id", nullable = false)
+  private AcademicYear academicYear;
 }

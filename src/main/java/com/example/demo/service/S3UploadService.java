@@ -9,7 +9,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 @Service
 public class S3UploadService {
 
-  @Value("${app.s3.bucket}")
+  @Value("${app.s3.bucket:default-bucket-name}")
   private String bucketName;
 
   private final S3Client s3Client;

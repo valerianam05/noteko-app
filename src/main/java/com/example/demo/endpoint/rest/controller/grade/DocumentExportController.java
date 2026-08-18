@@ -12,26 +12,26 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/document-exports")
 @RequiredArgsConstructor
 public class DocumentExportController {
+
   private final DocumentExportService documentExportService;
 
-  @GetMapping
+  @GetMapping("/api/document-exports")
   public ResponseEntity<List<DocumentExportResponse>> getDocumentExports(
       @RequestParam(required = false) UUID studentId,
       @RequestParam(required = false) UUID promotionId,
       @RequestParam(required = false) UUID academicYearId) {
     return ResponseEntity.ok(
-        documentExportService.getDocumentExports(studentId, promotionId, academicYearId));
+        documentExportService.findExports(studentId, promotionId, academicYearId));
   }
 
-  @GetMapping("/{id}")
+  @GetMapping("/api/document-exports/{id}")
   public ResponseEntity<DocumentExportResponse> getDocumentExportById(@PathVariable UUID id) {
-    return ResponseEntity.ok(documentExportService.getDocumentExportById(id));
+    return ResponseEntity.ok(documentExportService.findById(id));
   }
 
-  @PostMapping("/graduates")
+  @PostMapping("/api/document-exports/graduates")
   public ResponseEntity<DocumentExportResponse> exportGraduates(
       @Valid @RequestBody GraduatesExportRequest request) {
     DocumentExportResponse response = documentExportService.exportGraduates(request.promotionId());

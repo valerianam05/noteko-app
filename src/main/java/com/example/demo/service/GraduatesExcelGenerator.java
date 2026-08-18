@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import com.example.demo.dto.response.GraduationStatusResponse;
 import com.example.demo.entity.Student;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
@@ -15,7 +16,7 @@ import org.springframework.stereotype.Component;
 public class GraduatesExcelGenerator {
 
   private final StudentService studentService;
-  private final GradeService graduationStatusService;
+  private final TranscriptService transcriptService;
 
   public byte[] generate(UUID promotionId) throws Exception {
     List<Student> students = studentService.findByPromotionId(promotionId);
@@ -31,8 +32,12 @@ public class GraduatesExcelGenerator {
 
       int rowIndex = 1;
       for (Student student : students) {
-        boolean isGraduated = graduationStatusService.isGraduated(student.getId());
-        if (!isGraduated) continue;
+        GraduationStatusResponse status =
+            transcriptService.getGraduationStatus(student.getStdNumber());
+
+        if (!status.isGraduated()) {
+          continue;
+        }
 
         Row row = sheet.createRow(rowIndex++);
         row.createCell(0)

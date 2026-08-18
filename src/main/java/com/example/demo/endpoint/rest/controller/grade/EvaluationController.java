@@ -1,11 +1,7 @@
 package com.example.demo.endpoint.rest.controller.grade;
 
 import com.example.demo.dto.request.EvaluationRequest;
-import com.example.demo.dto.response.EvaluationResponse;
-import com.example.demo.dto.response.GradeResponse;
 import com.example.demo.entity.Evaluation;
-import com.example.demo.mapper.EvaluationMapper;
-import com.example.demo.mapper.GradeMapper;
 import com.example.demo.service.EvaluationService;
 import com.example.demo.service.GradeService;
 import jakarta.validation.Valid;
@@ -25,35 +21,25 @@ public class EvaluationController {
   private final GradeService gradeService;
 
   @GetMapping
-  public ResponseEntity<List<EvaluationResponse>> getEvaluations(
+  public ResponseEntity<List<Evaluation>> getEvaluations(
       @RequestParam(required = false) UUID courseAssignmentId) {
-    List<EvaluationResponse> responses =
-        evaluationService.findEvaluations(courseAssignmentId).stream()
-            .map(EvaluationMapper::toResponse)
-            .toList();
-    return ResponseEntity.ok(responses);
+    return ResponseEntity.ok(evaluationService.findEvaluations(courseAssignmentId));
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<EvaluationResponse> getEvaluationById(@PathVariable UUID id) {
-    Evaluation evaluation = evaluationService.findById(id);
-    return ResponseEntity.ok(EvaluationMapper.toResponse(evaluation));
+  public ResponseEntity<Evaluation> getEvaluationById(@PathVariable UUID id) {
+    return ResponseEntity.ok(evaluationService.findById(id));
   }
 
   @PostMapping
-  public ResponseEntity<EvaluationResponse> createEvaluation(
+  public ResponseEntity<Evaluation> createEvaluation(
       @Valid @RequestBody EvaluationRequest request) {
-    Evaluation evaluation = evaluationService.create(request);
-    return ResponseEntity.status(HttpStatus.CREATED).body(EvaluationMapper.toResponse(evaluation));
+    return ResponseEntity.status(HttpStatus.CREATED).body(evaluationService.create(request));
   }
 
   @PostMapping("/{id}/publish")
-  public ResponseEntity<List<GradeResponse>> publishEvaluation(@PathVariable UUID id) {
-    List<GradeResponse> responses =
-        gradeService.publishGradesForEvaluation(id).stream()
-            .map(GradeMapper::toModel)
-            .map(GradeMapper::toResponse)
-            .toList();
-    return ResponseEntity.ok(responses);
+  public ResponseEntity<Void> publishEvaluation(@PathVariable UUID id) {
+    gradeService.publishGradesForEvaluation(id);
+    return ResponseEntity.noContent().build();
   }
 }

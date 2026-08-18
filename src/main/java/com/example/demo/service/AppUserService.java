@@ -36,8 +36,7 @@ public class AppUserService {
     AppUser user =
         AppUser.builder()
             .email(email)
-            .password(
-                rawPassword) // TODO: encoder avec PasswordEncoder une fois Spring Security en place
+            .password(rawPassword)
             .firstName(firstName)
             .lastName(lastName)
             .role(role)

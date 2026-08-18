@@ -6,9 +6,9 @@ import com.example.demo.entity.AcademicYear;
 import com.example.demo.entity.Course;
 import com.example.demo.entity.CourseValidation;
 import com.example.demo.entity.Student;
+import com.example.demo.entity.enums.SessionType;
 import com.example.demo.mapper.CourseValidationMapper;
 import com.example.demo.repository.CourseValidationRepository;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -27,16 +27,19 @@ public class CourseValidationService {
 
   @Transactional(readOnly = true)
   public List<CourseValidationResponse> getCourseValidations(UUID studentId, UUID academicYearId) {
-    List<CourseValidation> results;
-    if (studentId != null && academicYearId != null) {
-      results =
-          courseValidationRepository.findByStudent_IdAndAcademicYear_Id(studentId, academicYearId);
-    } else if (studentId != null) {
-      results = courseValidationRepository.findByStudentUserId(studentId);
-    } else {
-      results = courseValidationRepository.findAll();
-    }
+    List<CourseValidation> results = findValidationsByCriteria(studentId, academicYearId);
     return results.stream().map(CourseValidationMapper::toResponse).toList();
+  }
+
+  private List<CourseValidation> findValidationsByCriteria(UUID studentId, UUID academicYearId) {
+    if (studentId != null && academicYearId != null) {
+      return courseValidationRepository.findByStudent_UserIdAndAcademicYear_Id(
+          studentId, academicYearId);
+    }
+    if (studentId != null) {
+      return courseValidationRepository.findByStudent_UserId(studentId);
+    }
+    return courseValidationRepository.findAll();
   }
 
   public CourseValidationResponse computeCourseValidation(CourseValidationRequest request) {
@@ -46,9 +49,9 @@ public class CourseValidationService {
 
     CourseValidation validation =
         courseValidationRepository
-            .findByStudentUserIdAndCourseIdAndAcademicYearId(
+            .findByStudent_UserIdAndCourse_IdAndAcademicYear_Id(
                 request.studentId(), request.courseId(), request.academicYearId())
-            .orElse(new CourseValidation());
+            .orElseGet(CourseValidation::new);
 
     validation.setStudent(student);
     validation.setCourse(course);
@@ -56,8 +59,7 @@ public class CourseValidationService {
     validation.setFinalAverage(request.finalAverage());
     validation.setValidated(request.validated());
     validation.setCreditsObtained(request.creditsObtained());
-    validation.setSession(request.session());
-    validation.setComputedAt(OffsetDateTime.now());
+    validation.setSession(SessionType.valueOf(request.session()));
 
     CourseValidation saved = courseValidationRepository.save(validation);
     return CourseValidationMapper.toResponse(saved);

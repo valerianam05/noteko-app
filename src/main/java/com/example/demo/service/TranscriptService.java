@@ -27,12 +27,13 @@ public class TranscriptService {
     Student student = studentService.findByStdNumber(std);
 
     List<CourseValidation> validations =
-        courseValidationRepository.findByStudent_Id(student.getId());
+        courseValidationRepository.findByStudent_UserId(student.getId());
 
     if (semesterCode != null) {
       validations =
           validations.stream()
-              .filter(v -> v.getCourse().getSemester().getCode().equalsIgnoreCase(semesterCode))
+              .filter(
+                  v -> v.getCourse().getSemester().getCode().name().equalsIgnoreCase(semesterCode))
               .toList();
     }
 
@@ -50,23 +51,24 @@ public class TranscriptService {
     String parcours =
         student.getEnrollments() != null && !student.getEnrollments().isEmpty()
             ? student.getEnrollments().get(0).getGroup().getParcours().name()
-            : null; // ⚠️ à adapter selon ta vraie relation Student -> StudentEnrollment -> Group
+            : null;
 
-    return new TranscriptResponse(
-        student.getStdNumber(),
-        student.getFirstName() + " " + student.getLastName(),
-        semesterCode,
-        parcours,
-        generalAverage,
-        totalValidatedCredits,
-        isGraduated);
+    return TranscriptResponse.builder()
+        .studentStd(student.getStdNumber())
+        .studentName(student.getFirstName() + " " + student.getLastName())
+        .semesterCode(semesterCode)
+        .parcours(parcours)
+        .generalAverage(generalAverage)
+        .totalValidatedCredits(totalValidatedCredits)
+        .isGraduated(isGraduated)
+        .build();
   }
 
   public GraduationStatusResponse getGraduationStatus(String std) {
     Student student = studentService.findByStdNumber(std);
 
     List<CourseValidation> validations =
-        courseValidationRepository.findByStudent_Id(student.getId());
+        courseValidationRepository.findByStudent_UserId(student.getId());
 
     Map<String, Integer> creditsByLevel =
         validations.stream()
@@ -78,16 +80,17 @@ public class TranscriptService {
 
     int totalValidated = creditsByLevel.values().stream().mapToInt(Integer::intValue).sum();
 
-    return new GraduationStatusResponse(
-        student.getStdNumber(),
-        TOTAL_CREDITS_REQUIRED,
-        totalValidated,
-        creditsByLevel,
-        totalValidated >= TOTAL_CREDITS_REQUIRED);
+    return GraduationStatusResponse.builder()
+        .studentStd(student.getStdNumber())
+        .totalRequiredCredits(TOTAL_CREDITS_REQUIRED)
+        .totalValidatedCredits(totalValidated)
+        .creditsByLevel(creditsByLevel)
+        .isGraduated(totalValidated >= TOTAL_CREDITS_REQUIRED)
+        .build();
   }
 
   private int computeTotalValidatedCredits(Student student) {
-    return courseValidationRepository.findByStudent_Id(student.getId()).stream()
+    return courseValidationRepository.findByStudent_UserId(student.getId()).stream()
         .filter(CourseValidation::getValidated)
         .mapToInt(CourseValidation::getCreditsObtained)
         .sum();

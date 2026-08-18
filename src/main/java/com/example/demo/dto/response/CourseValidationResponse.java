@@ -1,9 +1,12 @@
 package com.example.demo.dto.response;
 
+import com.example.demo.entity.AcademicYear;
 import com.example.demo.entity.enums.SessionType;
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import lombok.Builder;
 
+@Builder
 public record CourseValidationResponse(
     UUID id,
     UUID studentId,
@@ -12,4 +15,5 @@ public record CourseValidationResponse(
     Boolean validated,
     Integer creditsObtained,
     SessionType session,
+    AcademicYear academicYearId,
     OffsetDateTime computedAt) {}
