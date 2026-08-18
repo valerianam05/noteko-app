@@ -1,4 +1,4 @@
-package com.example.demo.endpoint.rest.controller.health.AcademicYear;
+package com.example.demo.endpoint.rest.controller.grade.AcademicYear;
 
 import com.example.demo.dto.response.AcademicYearResponse;
 import com.example.demo.mapper.AcademicYearMapper;

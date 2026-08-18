@@ -14,6 +14,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class Evaluation {
+
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
@@ -41,4 +42,12 @@ public class Evaluation {
 
   @Column(name = "date_evaluation", nullable = false)
   private OffsetDateTime dateEvaluation;
+
+  @Transient
+  public UUID getCourseId() {
+    if (courseAssignment != null && courseAssignment.getCourse() != null) {
+      return courseAssignment.getCourse().getId();
+    }
+    return null;
+  }
 }

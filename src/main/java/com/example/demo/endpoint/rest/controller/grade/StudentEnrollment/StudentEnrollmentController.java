@@ -1,4 +1,4 @@
-package com.example.demo.endpoint.rest.controller.health.StudentEnrollment;
+package com.example.demo.endpoint.rest.controller.grade.StudentEnrollment;
 
 import com.example.demo.dto.request.StudentEnrollmentRequest;
 import com.example.demo.dto.response.StudentEnrollmentResponse;

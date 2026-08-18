@@ -7,14 +7,17 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
+@Repository
 public interface CourseValidationRepository extends JpaRepository<CourseValidation, UUID> {
 
-  List<CourseValidation> findByStudentUserId(UUID studentId);
+  List<CourseValidation> findByStudent_UserId(UUID studentId);
 
-  List<CourseValidation> findByStudentUserIdAndAcademicYearId(UUID studentId, UUID academicYearId);
+  List<CourseValidation> findByStudent_UserIdAndAcademicYear_Id(
+      UUID studentId, UUID academicYearId);
 
-  Optional<CourseValidation> findByStudentUserIdAndCourseIdAndAcademicYearId(
+  Optional<CourseValidation> findByStudent_UserIdAndCourse_IdAndAcademicYear_Id(
       UUID studentId, UUID courseId, UUID academicYearId);
 
   @Query(

@@ -20,21 +20,29 @@ public class StudentService {
   private final StudentRepository studentRepository;
   private final AppUserService appUserService;
 
+  @Transactional(readOnly = true)
   public List<Student> findAll() {
     return studentRepository.findAll();
   }
 
+  @Transactional(readOnly = true)
   public Student findById(UUID id) {
     return studentRepository
         .findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Étudiant introuvable : " + id));
   }
 
+  @Transactional(readOnly = true)
   public Student findByStdNumber(String stdNumber) {
     return studentRepository
         .findByStdNumber(stdNumber)
         .orElseThrow(
             () -> new ResourceNotFoundException("Étudiant introuvable, matricule : " + stdNumber));
+  }
+
+  @Transactional(readOnly = true)
+  public List<Student> findByPromotionId(UUID promotionId) {
+    return studentRepository.findByEnrollments_Group_Promotion_Id(promotionId);
   }
 
   public Student create(

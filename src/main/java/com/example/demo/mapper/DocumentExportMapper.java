@@ -27,5 +27,6 @@ public final class DocumentExportMapper {
         model.getS3Key(),
         model.getStatus(),
         model.getGeneratedAt());
+    //        model.getSentAt());
   }
 }
