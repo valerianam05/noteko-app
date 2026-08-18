@@ -49,7 +49,7 @@ public class SecurityConfig {
             e -> e.authenticationEntryPoint(entryPoint).accessDeniedHandler(accessDeniedHandler))
         .authorizeHttpRequests(
             auth ->
-                auth.requestMatchers("/auth/login", "/ping", "/health/**")
+                auth.requestMatchers("/api/auth/login", "/ping", "/health/**")
                     .permitAll()
                     .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
                     .permitAll()
