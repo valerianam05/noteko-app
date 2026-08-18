@@ -8,6 +8,7 @@ import com.example.demo.entity.enums.ExportStatus;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.mapper.DocumentExportMapper;
 import com.example.demo.repository.DocumentExportRepository;
+import com.example.demo.service.event.S3Service;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -27,22 +28,27 @@ public class DocumentExportService {
   private final DocumentExportRepository documentExportRepository;
   private final PromotionService promotionService;
   private final GraduatesExcelGenerator excelGenerator;
-  private final S3UploadService s3UploadService;
+  private final S3Service s3Service;
 
   @Transactional(readOnly = true)
   public List<DocumentExportResponse> getDocumentExports(
       UUID studentId, UUID promotionId, UUID academicYearId) {
-    List<DocumentExport> results;
-    if (studentId != null) {
-      results = documentExportRepository.findByStudentUserId(studentId);
-    } else if (promotionId != null) {
-      results = documentExportRepository.findByPromotion_Id(promotionId);
-    } else if (academicYearId != null) {
-      results = documentExportRepository.findByAcademicYear_Id(academicYearId);
-    } else {
-      results = documentExportRepository.findAll();
-    }
+    List<DocumentExport> results = findExportsByCriteria(studentId, promotionId, academicYearId);
     return results.stream().map(DocumentExportMapper::toResponse).toList();
+  }
+
+  private List<DocumentExport> findExportsByCriteria(
+      UUID studentId, UUID promotionId, UUID academicYearId) {
+    if (studentId != null) {
+      return documentExportRepository.findByStudentUserId(studentId);
+    }
+    if (promotionId != null) {
+      return documentExportRepository.findByPromotion_Id(promotionId);
+    }
+    if (academicYearId != null) {
+      return documentExportRepository.findByAcademicYear_Id(academicYearId);
+    }
+    return documentExportRepository.findAll();
   }
 
   @Transactional(readOnly = true)
@@ -63,7 +69,7 @@ public class DocumentExportService {
     export.setPromotion(promotion);
     export.setDocType(ExportFileType.GRADUATES_EXCEL);
     export.setStatus(ExportStatus.PENDING);
-    export.setGeneratedAt(OffsetDateTime.now());
+    export.setGeneratedAt(OffsetDateTime.now().toLocalDateTime());
 
     DocumentExport saved = documentExportRepository.save(export);
 
@@ -74,14 +80,22 @@ public class DocumentExportService {
 
   @Async
   public void processGraduatesExportAsync(UUID exportId, UUID promotionId) {
-    DocumentExport export = documentExportRepository.findById(exportId).orElseThrow();
+    DocumentExport export = documentExportRepository.findById(exportId).orElse(null);
+    if (export == null) {
+      log.error("Export introuvable pour ID : {}", exportId);
+      return;
+    }
+
     try {
       byte[] excelBytes = excelGenerator.generate(promotionId);
-      String s3Key = "exports/graduates/%s.xlsx".formatted(exportId);
-      s3UploadService.upload(
-          excelBytes, s3Key, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      String fileName = "diplomes_promo_" + promotionId + ".xlsx";
 
-      export.setS3Key(s3Key);
+      String contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+      String presignedUrl =
+          s3Service.uploadFileAndGenerateUrl(
+              excelBytes, fileName, promotionId.toString(), contentType);
+
+      export.setS3Key(presignedUrl);
       export.setStatus(ExportStatus.GENERATED);
     } catch (Exception e) {
       log.error("Échec de la génération de l'export diplômés {}", exportId, e);
