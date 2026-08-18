@@ -32,9 +32,12 @@ public class EvaluationService {
   }
 
   @Transactional(readOnly = true)
-  public List<Evaluation> findByCourse(UUID courseId) {
-    courseAssignmentService.findById(courseId);
-    return evaluationRepository.findByCourseAssignment_Id(courseId);
+  public List<Evaluation> findEvaluations(UUID courseAssignmentId) {
+    if (courseAssignmentId != null) {
+      courseAssignmentService.findById(courseAssignmentId);
+      return evaluationRepository.findByCourseAssignment_Id(courseAssignmentId);
+    }
+    return evaluationRepository.findAll();
   }
 
   public Evaluation create(EvaluationRequest request) {
@@ -45,8 +48,10 @@ public class EvaluationService {
     Evaluation evaluation =
         Evaluation.builder()
             .courseAssignment(courseAssignment)
+            .academicYear(courseAssignment.getAcademicYear())
             .title(request.title())
             .type(request.type() != null ? request.type().name() : null)
+            .session(request.session())
             .coefficient(request.weight())
             .dateEvaluation(request.evaluationDate())
             .build();
@@ -68,25 +73,14 @@ public class EvaluationService {
     CourseAssignment courseAssignment = courseAssignmentService.findById(request.courseId());
 
     evaluation.setCourseAssignment(courseAssignment);
+    evaluation.setAcademicYear(courseAssignment.getAcademicYear());
     evaluation.setTitle(request.title());
     evaluation.setType(request.type() != null ? request.type().name() : null);
-
+    evaluation.setSession(request.session());
     evaluation.setCoefficient(request.weight());
-
     evaluation.setDateEvaluation(request.evaluationDate());
 
     return evaluationRepository.save(evaluation);
-  }
-
-  public void delete(UUID evaluationId) {
-    Evaluation evaluation = findById(evaluationId);
-
-    boolean aDesNotes = !gradeRepository.findByEvaluationId(evaluationId).isEmpty();
-    if (aDesNotes) {
-      throw new ConflictException("Impossible de supprimer une évaluation associée à des notes");
-    }
-
-    evaluationRepository.delete(evaluation);
   }
 
   private void validerWeight(Double weight) {

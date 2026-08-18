@@ -26,4 +26,6 @@ public interface CourseValidationRepository extends JpaRepository<CourseValidati
       GROUP BY c.semester.level
       """)
   List<Object[]> sumValidatedCreditsByLevel(@Param("studentId") UUID studentId);
+
+  List<CourseValidation> findByStudent_IdAndAcademicYear_Id(UUID studentId, UUID academicYearId);
 }

@@ -114,4 +114,27 @@ public class GradeService {
       throw new ValidationException("La note doit être comprise entre 0.0 et 20.0");
     }
   }
+
+  @Transactional(readOnly = true)
+  public List<Grade> findGrades(UUID studentId, UUID evaluationId, Boolean published) {
+    if (studentId != null && evaluationId != null) {
+      List<Grade> result =
+          gradeRepository.findByStudentUserIdAndEvaluationId(studentId, evaluationId);
+      return published == null
+          ? result
+          : result.stream().filter(g -> g.getPublished() == published).toList();
+    }
+    if (studentId != null) {
+      return gradeRepository.findByStudentUserId(studentId);
+    }
+    if (evaluationId != null) {
+      return published != null
+          ? gradeRepository.findByEvaluationIdAndPublished(evaluationId, published)
+          : gradeRepository.findByEvaluationId(evaluationId);
+    }
+    if (published != null) {
+      return gradeRepository.findByPublished(published);
+    }
+    return gradeRepository.findAll();
+  }
 }
