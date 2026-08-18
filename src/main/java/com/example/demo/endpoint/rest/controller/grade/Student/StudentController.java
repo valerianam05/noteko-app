@@ -42,4 +42,9 @@ public class StudentController {
             request.stdNumber());
     return studentMapper.toResponse(student);
   }
+
+  @GetMapping("/by-std/{std}")
+  public StudentResponse detailByStd(@PathVariable String std) {
+    return studentMapper.toResponse(studentService.findByStdNumber(std));
+  }
 }

@@ -17,4 +17,8 @@ public interface StudentEnrollmentRepository extends JpaRepository<StudentEnroll
 
   Optional<StudentEnrollment> findFirstByStudentUserIdAndDateFinIsNullOrderByDateDebutDesc(
       UUID studentUserId);
+
+  Optional<StudentEnrollment> findById(UUID id);
+
+  List<StudentEnrollment> findByGroupIdAndDateFinIsNull(UUID groupId);
 }
