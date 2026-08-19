@@ -37,7 +37,7 @@ public class AppUserService {
     AppUser user =
         AppUser.builder()
             .email(email)
-            .password(rawPassword)
+            .password(passwordEncoder.encode(rawPassword))
             .firstName(firstName)
             .lastName(lastName)
             .role(role)
