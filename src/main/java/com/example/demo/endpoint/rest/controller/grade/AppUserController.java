@@ -1,4 +1,4 @@
-package com.example.demo.endpoint.rest.controller.grade.AppUser;
+package com.example.demo.endpoint.rest.controller.grade;
 
 import com.example.demo.entity.AppUser;
 import com.example.demo.service.AppUserService;
