@@ -11,7 +11,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CourseValidationRepository extends JpaRepository<CourseValidation, UUID> {
-
   List<CourseValidation> findByStudent_UserId(UUID studentId);
 
   List<CourseValidation> findByStudent_UserIdAndAcademicYear_Id(
