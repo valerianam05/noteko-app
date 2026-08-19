@@ -1,4 +1,4 @@
-package com.example.demo.endpoint.rest.controller.grade.AcademicGroup;
+package com.example.demo.endpoint.rest.controller.grade;
 
 import com.example.demo.dto.request.AcademicGroupRequest;
 import com.example.demo.dto.response.AcademicGroupResponse;

@@ -50,6 +50,14 @@ public class SecurityConfig {
             auth ->
                 auth.requestMatchers("/api/auth/login", "/ping", "/health/**")
                     .permitAll()
+                    .requestMatchers(
+                        HttpMethod.POST,
+                        "/api/students",
+                        "/api/teachers",
+                        "/api/groups",
+                        "/api/promotions",
+                        "/api/academic-years")
+                    .hasRole("ADMIN")
                     .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
                     .permitAll()
                     .requestMatchers("/ui/**", "/css/**", "/js/**")
