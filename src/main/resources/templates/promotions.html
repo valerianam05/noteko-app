@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Promotions — HEI Grade Flow</title>
+    <link rel="stylesheet" th:href="@{/css/promotions.css}">
+</head>
+<body>
+<div class="container">
+    <h1>Liste des promotions</h1>
+
+    <div class="search-box">
+        <input type="text" id="promotion-search" placeholder="Rechercher une promotion...">
+    </div>
+
+    <table th:if="${not #lists.isEmpty(promotions)}">
+        <thead>
+        <tr>
+            <th>Nom</th>
+            <th>Année</th>
+            <th>Diplômés</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="promotion : ${promotions}" th:attr="data-name=${promotion.name}">
+            <td th:text="${promotion.name}">Nom</td>
+            <td th:text="${promotion.year}">Année</td>
+            <td>
+                <a class="btn-download"
+                   th:href="@{/ui/promotions/{id}/graduates/excel(id=${promotion.id})}">
+                    Télécharger (.xlsx)
+                </a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="empty-state" th:if="${#lists.isEmpty(promotions)}">
+        Aucune promotion enregistrée.
+    </div>
+</div>
+
+<script th:src="@{/js/promotions.js}"></script>
+</body>
+</html>

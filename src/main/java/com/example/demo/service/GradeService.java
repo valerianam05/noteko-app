@@ -137,4 +137,26 @@ public class GradeService {
     }
     return gradeRepository.findAll();
   }
+
+  @Transactional(readOnly = true)
+  public Double calculateStudentAverage(UUID studentId) {
+    List<Grade> grades = gradeRepository.findByStudentUserId(studentId);
+
+    List<Grade> publishedGrades = grades.stream().filter(Grade::getPublished).toList();
+
+    if (publishedGrades.isEmpty()) {
+      return 0.0;
+    }
+
+    double totalPoints = 0.0;
+    double totalCoefficients = 0.0;
+
+    for (Grade grade : publishedGrades) {
+      Double coeff = grade.getEvaluation().getCoefficient();
+      totalPoints += grade.getScore() * coeff;
+      totalCoefficients += coeff;
+    }
+
+    return totalCoefficients > 0 ? totalPoints / totalCoefficients : 0.0;
+  }
 }
