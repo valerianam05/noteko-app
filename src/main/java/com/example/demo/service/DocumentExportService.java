@@ -1,15 +1,20 @@
 package com.example.demo.service;
 
 import com.example.demo.dto.response.DocumentExportResponse;
+import com.example.demo.entity.CourseValidation;
 import com.example.demo.entity.DocumentExport;
 import com.example.demo.entity.Promotion;
 import com.example.demo.entity.Student;
 import com.example.demo.entity.enums.ExportFileType;
 import com.example.demo.entity.enums.ExportStatus;
 import com.example.demo.exception.ResourceNotFoundException;
+import com.example.demo.mail.Email;
+import com.example.demo.mail.Mailer;
 import com.example.demo.mapper.DocumentExportMapper;
+import com.example.demo.repository.CourseValidationRepository;
 import com.example.demo.repository.DocumentExportRepository;
 import com.example.demo.service.event.S3Service;
+import jakarta.mail.internet.InternetAddress;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -29,11 +34,14 @@ public class DocumentExportService {
   private static final Logger log = LoggerFactory.getLogger(DocumentExportService.class);
 
   private final DocumentExportRepository documentExportRepository;
+  private final CourseValidationRepository courseValidationRepository;
   private final PromotionService promotionService;
   private final StudentService studentService;
   private final AcademicYearService academicYearService;
   private final GraduatesExcelGenerator excelGenerator;
+  private final TranscriptPdfGenerator transcriptPdfGenerator;
   private final S3Service s3Service;
+  private final Mailer mailer;
 
   @Transactional(readOnly = true)
   public List<DocumentExportResponse> findExports(
@@ -97,10 +105,10 @@ public class DocumentExportService {
     try {
       byte[] excelBytes = excelGenerator.generate(promotionId);
       String fileName = "diplomes_promo_" + promotionId + ".xlsx";
-      String contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
       String presignedUrl =
-          s3Service.uploadFileAndGenerateUrl(
-              excelBytes, fileName, promotionId.toString(), contentType);
+          s3Service.uploadPdfAndGenerateUrl(excelBytes, fileName, promotionId.toString());
+
       export.setS3Key(presignedUrl);
       export.setStatus(ExportStatus.GENERATED);
     } catch (Exception e) {
@@ -118,8 +126,48 @@ public class DocumentExportService {
       return;
     }
     try {
-      // TODO : génération PDF + upload S3 + envoi SES — reporté
-      export.setStatus(ExportStatus.PENDING);
+      Student student = studentService.findByStdNumber(std);
+      List<CourseValidation> validations =
+          courseValidationRepository.findByStudent_UserId(student.getUserId());
+
+      byte[] pdfBytes =
+          transcriptPdfGenerator.generateTranscriptPdf(student, semesterCode, validations);
+      String fileName = "releve_notes_" + std + "_" + semesterCode + ".pdf";
+
+      String presignedUrl =
+          s3Service.uploadPdfAndGenerateUrl(pdfBytes, fileName, student.getUserId().toString());
+
+      export.setS3Key(presignedUrl);
+
+      String recipientEmail = student.getAppUser() != null ? student.getAppUser().getEmail() : null;
+      if (recipientEmail != null && !recipientEmail.isBlank()) {
+
+        String htmlBody =
+            "<p>Bonjour "
+                + student.getFirstName()
+                + ",</p>"
+                + "<p>Votre relevé de notes pour le semestre "
+                + semesterCode
+                + " est disponible.</p>"
+                + "<p>Vous pouvez le télécharger directement ici : <a href=\""
+                + presignedUrl
+                + "\">Télécharger mon relevé (PDF)</a></p>"
+                + "<p>Cordialement,<br/>L'équipe pédagogique</p>";
+
+        Email email =
+            new Email(
+                new InternetAddress(recipientEmail),
+                List.of(),
+                List.of(),
+                "Votre relevé de notes - " + semesterCode,
+                htmlBody,
+                List.of());
+
+        mailer.accept(email);
+        export.setSentAt(OffsetDateTime.now().toLocalDateTime());
+      }
+
+      export.setStatus(ExportStatus.GENERATED);
     } catch (Exception e) {
       log.error("Échec de la génération du relevé PDF {}", exportId, e);
       export.setStatus(ExportStatus.FAILED);
@@ -163,5 +211,10 @@ public class DocumentExportService {
                 : null)
         .sentAt(entity.getSentAt() != null ? entity.getSentAt().atOffset(ZoneOffset.UTC) : null)
         .build();
+  }
+
+  public List<CourseValidation> getValidations(String std) {
+    Student student = studentService.findByStdNumber(std);
+    return courseValidationRepository.findByStudent_UserId(student.getUserId());
   }
 }
