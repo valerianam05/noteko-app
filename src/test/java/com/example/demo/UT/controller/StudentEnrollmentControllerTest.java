@@ -22,92 +22,70 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class StudentEnrollmentControllerTest {
 
-    @Mock
-    private StudentEnrollmentService studentEnrollmentService;
+  @Mock private StudentEnrollmentService studentEnrollmentService;
 
-    @Mock
-    private StudentEnrollmentMapper studentEnrollmentMapper;
+  @Mock private StudentEnrollmentMapper studentEnrollmentMapper;
 
-    @InjectMocks
-    private StudentEnrollmentController studentEnrollmentController;
+  @InjectMocks private StudentEnrollmentController studentEnrollmentController;
 
-    private UUID studentId;
-    private UUID groupId;
-    private UUID semesterId;
-    private UUID academicYearId;
+  private UUID studentId;
+  private UUID groupId;
+  private UUID semesterId;
+  private UUID academicYearId;
 
-    private StudentEnrollment enrollment;
-    private StudentEnrollmentResponse response;
+  private StudentEnrollment enrollment;
+  private StudentEnrollmentResponse response;
 
-    @BeforeEach
-    void setUp() {
-        studentId = UUID.randomUUID();
-        groupId = UUID.randomUUID();
-        semesterId = UUID.randomUUID();
-        academicYearId = UUID.randomUUID();
+  @BeforeEach
+  void setUp() {
+    studentId = UUID.randomUUID();
+    groupId = UUID.randomUUID();
+    semesterId = UUID.randomUUID();
+    academicYearId = UUID.randomUUID();
 
-        enrollment = mock(StudentEnrollment.class);
-        response = mock(StudentEnrollmentResponse.class);
-    }
+    enrollment = mock(StudentEnrollment.class);
+    response = mock(StudentEnrollmentResponse.class);
+  }
 
-    @Test
-    @DisplayName("list doit retourner les inscriptions d'un étudiant")
-    void list_Success() {
-        when(studentEnrollmentService.findByStudent(studentId))
-                .thenReturn(List.of(enrollment));
+  @Test
+  @DisplayName("list doit retourner les inscriptions d'un étudiant")
+  void list_Success() {
+    when(studentEnrollmentService.findByStudent(studentId)).thenReturn(List.of(enrollment));
 
-        when(studentEnrollmentMapper.toResponse(enrollment))
-                .thenReturn(response);
+    when(studentEnrollmentMapper.toResponse(enrollment)).thenReturn(response);
 
-        List<StudentEnrollmentResponse> result =
-                studentEnrollmentController.list(studentId);
+    List<StudentEnrollmentResponse> result = studentEnrollmentController.list(studentId);
 
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(response, result.get(0));
+    assertNotNull(result);
+    assertEquals(1, result.size());
+    assertEquals(response, result.get(0));
 
-        verify(studentEnrollmentService)
-                .findByStudent(studentId);
+    verify(studentEnrollmentService).findByStudent(studentId);
 
-        verify(studentEnrollmentMapper)
-                .toResponse(enrollment);
-    }
+    verify(studentEnrollmentMapper).toResponse(enrollment);
+  }
 
-    @Test
-    @DisplayName("create doit inscrire un étudiant et retourner la réponse")
-    void create_Success() {
-        StudentEnrollmentRequest request =
-                new StudentEnrollmentRequest(
-                        studentId,
-                        groupId,
-                        semesterId,
-                        academicYearId);
+  @Test
+  @DisplayName("create doit inscrire un étudiant et retourner la réponse")
+  void create_Success() {
+    StudentEnrollmentRequest request =
+        new StudentEnrollmentRequest(studentId, groupId, semesterId, academicYearId);
 
-        when(
-                studentEnrollmentService.enroll(
-                        request.studentId(),
-                        request.groupId(),
-                        request.semesterId(),
-                        request.academicYearId()))
-                .thenReturn(enrollment);
+    when(studentEnrollmentService.enroll(
+            request.studentId(), request.groupId(), request.semesterId(), request.academicYearId()))
+        .thenReturn(enrollment);
 
-        when(studentEnrollmentMapper.toResponse(enrollment))
-                .thenReturn(response);
+    when(studentEnrollmentMapper.toResponse(enrollment)).thenReturn(response);
 
-        StudentEnrollmentResponse result =
-                studentEnrollmentController.create(request);
+    StudentEnrollmentResponse result = studentEnrollmentController.create(request);
 
-        assertNotNull(result);
-        assertEquals(response, result);
+    assertNotNull(result);
+    assertEquals(response, result);
 
-        verify(studentEnrollmentService)
-                .enroll(
-                        request.studentId(),
-                        request.groupId(),
-                        request.semesterId(),
-                        request.academicYearId());
+    verify(studentEnrollmentService)
+        .enroll(
+            request.studentId(), request.groupId(), request.semesterId(), request.academicYearId());
 
-        verify(studentEnrollmentMapper)
-                .toResponse(enrollment);
-    }
+    verify(studentEnrollmentMapper).toResponse(enrollment);
+  }
 }

@@ -32,178 +32,130 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class AcademicGroupControllerTest {
 
-    @Mock
-    private AcademicGroupService academicGroupService;
+  @Mock private AcademicGroupService academicGroupService;
 
-    @Mock
-    private AcademicGroupMapper academicGroupMapper;
+  @Mock private AcademicGroupMapper academicGroupMapper;
 
-    @Mock
-    private StudentEnrollmentService studentEnrollmentService;
+  @Mock private StudentEnrollmentService studentEnrollmentService;
 
-    @Mock
-    private StudentMapper studentMapper;
+  @Mock private StudentMapper studentMapper;
 
-    @Mock
-    private StudentEnrollmentMapper studentEnrollmentMapper;
+  @Mock private StudentEnrollmentMapper studentEnrollmentMapper;
 
-    @InjectMocks
-    private AcademicGroupController academicGroupController;
+  @InjectMocks private AcademicGroupController academicGroupController;
 
-    private UUID promotionId;
-    private UUID groupId;
-    private UUID studentId;
-    private UUID enrollmentId;
+  private UUID promotionId;
+  private UUID groupId;
+  private UUID studentId;
+  private UUID enrollmentId;
 
-    private AcademicGroup group;
-    private Student student;
-    private StudentEnrollment enrollment;
+  private AcademicGroup group;
+  private Student student;
+  private StudentEnrollment enrollment;
 
-    private AcademicGroupResponse groupResponse;
-    private StudentResponse studentResponse;
-    private StudentEnrollmentResponse enrollmentResponse;
+  private AcademicGroupResponse groupResponse;
+  private StudentResponse studentResponse;
+  private StudentEnrollmentResponse enrollmentResponse;
 
-    @BeforeEach
-    void setUp() {
-        promotionId = UUID.randomUUID();
-        groupId = UUID.randomUUID();
-        studentId = UUID.randomUUID();
-        enrollmentId = UUID.randomUUID();
+  @BeforeEach
+  void setUp() {
+    promotionId = UUID.randomUUID();
+    groupId = UUID.randomUUID();
+    studentId = UUID.randomUUID();
+    enrollmentId = UUID.randomUUID();
 
-        group =
-                AcademicGroup.builder()
-                        .id(groupId)
-                        .name("L2-TN")
-                        .build();
+    group = AcademicGroup.builder().id(groupId).name("L2-TN").build();
 
-        student =
-                Student.builder()
-                        .userId(studentId)
-                        .stdNumber("STD24020")
-                        .build();
+    student = Student.builder().userId(studentId).stdNumber("STD24020").build();
 
-        enrollment = mock(StudentEnrollment.class);
+    enrollment = mock(StudentEnrollment.class);
 
-        groupResponse = mock(AcademicGroupResponse.class);
-        studentResponse = mock(StudentResponse.class);
-        enrollmentResponse = mock(StudentEnrollmentResponse.class);
-    }
+    groupResponse = mock(AcademicGroupResponse.class);
+    studentResponse = mock(StudentResponse.class);
+    enrollmentResponse = mock(StudentEnrollmentResponse.class);
+  }
 
-    @Test
-    @DisplayName("list doit retourner les groupes d'une promotion")
-    void list_Success() {
-        when(academicGroupService.findByPromotion(promotionId))
-                .thenReturn(List.of(group));
+  @Test
+  @DisplayName("list doit retourner les groupes d'une promotion")
+  void list_Success() {
+    when(academicGroupService.findByPromotion(promotionId)).thenReturn(List.of(group));
 
-        when(academicGroupMapper.toResponse(group))
-                .thenReturn(groupResponse);
+    when(academicGroupMapper.toResponse(group)).thenReturn(groupResponse);
 
-        List<AcademicGroupResponse> result =
-                academicGroupController.list(promotionId);
+    List<AcademicGroupResponse> result = academicGroupController.list(promotionId);
 
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(groupResponse, result.get(0));
+    assertNotNull(result);
+    assertEquals(1, result.size());
+    assertEquals(groupResponse, result.get(0));
 
-        verify(academicGroupService)
-                .findByPromotion(promotionId);
+    verify(academicGroupService).findByPromotion(promotionId);
 
-        verify(academicGroupMapper)
-                .toResponse(group);
-    }
+    verify(academicGroupMapper).toResponse(group);
+  }
 
-    @Test
-    @DisplayName("studentsInGroup doit retourner les étudiants actifs du groupe")
-    void studentsInGroup_Success() {
+  @Test
+  @DisplayName("studentsInGroup doit retourner les étudiants actifs du groupe")
+  void studentsInGroup_Success() {
 
-        when(enrollment.getStudent())
-                .thenReturn(student);
+    when(enrollment.getStudent()).thenReturn(student);
 
-        when(studentEnrollmentService.findActiveByGroup(groupId))
-                .thenReturn(List.of(enrollment));
+    when(studentEnrollmentService.findActiveByGroup(groupId)).thenReturn(List.of(enrollment));
 
-        when(studentMapper.toResponse(student))
-                .thenReturn(studentResponse);
+    when(studentMapper.toResponse(student)).thenReturn(studentResponse);
 
-        List<StudentResponse> result =
-                academicGroupController.studentsInGroup(groupId);
+    List<StudentResponse> result = academicGroupController.studentsInGroup(groupId);
 
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(studentResponse, result.get(0));
+    assertNotNull(result);
+    assertEquals(1, result.size());
+    assertEquals(studentResponse, result.get(0));
 
-        verify(studentEnrollmentService)
-                .findActiveByGroup(groupId);
+    verify(studentEnrollmentService).findActiveByGroup(groupId);
 
-        verify(enrollment)
-                .getStudent();
+    verify(enrollment).getStudent();
 
-        verify(studentMapper)
-                .toResponse(student);
-    }
+    verify(studentMapper).toResponse(student);
+  }
 
-    @Test
-    @DisplayName("create doit créer un groupe et retourner sa réponse")
-    void create_Success() {
+  @Test
+  @DisplayName("create doit créer un groupe et retourner sa réponse")
+  void create_Success() {
 
-        AcademicGroupRequest request =
-                new AcademicGroupRequest(
-                        "L2-TN",
-                        Parcours.TN,
-                        promotionId);
+    AcademicGroupRequest request = new AcademicGroupRequest("L2-TN", Parcours.TN, promotionId);
 
-        when(
-                academicGroupService.create(
-                        request.name(),
-                        request.parcours(),
-                        request.promotionId()))
-                .thenReturn(group);
+    when(academicGroupService.create(request.name(), request.parcours(), request.promotionId()))
+        .thenReturn(group);
 
-        when(academicGroupMapper.toResponse(group))
-                .thenReturn(groupResponse);
+    when(academicGroupMapper.toResponse(group)).thenReturn(groupResponse);
 
-        AcademicGroupResponse result =
-                academicGroupController.create(request);
+    AcademicGroupResponse result = academicGroupController.create(request);
 
-        assertNotNull(result);
-        assertEquals(groupResponse, result);
+    assertNotNull(result);
+    assertEquals(groupResponse, result);
 
-        verify(academicGroupService)
-                .create(
-                        request.name(),
-                        request.parcours(),
-                        request.promotionId());
+    verify(academicGroupService).create(request.name(), request.parcours(), request.promotionId());
 
-        verify(academicGroupMapper)
-                .toResponse(group);
-    }
+    verify(academicGroupMapper).toResponse(group);
+  }
 
-    @Test
-    @DisplayName("close doit fermer une inscription et retourner la réponse")
-    void close_Success() {
+  @Test
+  @DisplayName("close doit fermer une inscription et retourner la réponse")
+  void close_Success() {
 
-        LocalDate dateFin =
-                LocalDate.of(2026, 8, 20);
+    LocalDate dateFin = LocalDate.of(2026, 8, 20);
 
-        Map<String, LocalDate> body =
-                Map.of("dateFin", dateFin);
+    Map<String, LocalDate> body = Map.of("dateFin", dateFin);
 
-        when(studentEnrollmentService.close(enrollmentId, dateFin))
-                .thenReturn(enrollment);
+    when(studentEnrollmentService.close(enrollmentId, dateFin)).thenReturn(enrollment);
 
-        when(studentEnrollmentMapper.toResponse(enrollment))
-                .thenReturn(enrollmentResponse);
+    when(studentEnrollmentMapper.toResponse(enrollment)).thenReturn(enrollmentResponse);
 
-        StudentEnrollmentResponse result =
-                academicGroupController.close(enrollmentId, body);
+    StudentEnrollmentResponse result = academicGroupController.close(enrollmentId, body);
 
-        assertNotNull(result);
-        assertEquals(enrollmentResponse, result);
+    assertNotNull(result);
+    assertEquals(enrollmentResponse, result);
 
-        verify(studentEnrollmentService)
-                .close(enrollmentId, dateFin);
+    verify(studentEnrollmentService).close(enrollmentId, dateFin);
 
-        verify(studentEnrollmentMapper)
-                .toResponse(enrollment);
-    }
+    verify(studentEnrollmentMapper).toResponse(enrollment);
+  }
 }

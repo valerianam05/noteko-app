@@ -61,22 +61,18 @@ class GradeServiceTest {
 
     student = Student.builder().userId(studentId).build();
 
-    evaluation =
-            Evaluation.builder()
-                    .id(evaluationId)
-                    .coefficient(1.0)
-                    .build();
+    evaluation = Evaluation.builder().id(evaluationId).coefficient(1.0).build();
 
     appUser = AppUser.builder().id(userId).build();
 
     grade =
-            Grade.builder()
-                    .id(gradeId)
-                    .student(student)
-                    .evaluation(evaluation)
-                    .score(14.0)
-                    .published(false)
-                    .build();
+        Grade.builder()
+            .id(gradeId)
+            .student(student)
+            .evaluation(evaluation)
+            .score(14.0)
+            .published(false)
+            .build();
   }
 
   // =========================================================
@@ -100,9 +96,7 @@ class GradeServiceTest {
   void findById_NotFound() {
     when(gradeRepository.findById(gradeId)).thenReturn(Optional.empty());
 
-    assertThrows(
-            ResourceNotFoundException.class,
-            () -> gradeService.findById(gradeId));
+    assertThrows(ResourceNotFoundException.class, () -> gradeService.findById(gradeId));
   }
 
   // =========================================================
@@ -112,18 +106,13 @@ class GradeServiceTest {
   @Test
   @DisplayName("findHistoryByGradeId doit retourner l'historique si la note existe")
   void findHistoryByGradeId_Success() {
-    GradeHistory history =
-            GradeHistory.builder()
-                    .id(UUID.randomUUID())
-                    .grade(grade)
-                    .build();
+    GradeHistory history = GradeHistory.builder().id(UUID.randomUUID()).grade(grade).build();
 
     when(gradeRepository.findById(gradeId)).thenReturn(Optional.of(grade));
     when(gradeHistoryRepository.findByGrade_IdOrderByModifiedAtDesc(gradeId))
-            .thenReturn(List.of(history));
+        .thenReturn(List.of(history));
 
-    List<GradeHistory> result =
-            gradeService.findHistoryByGradeId(gradeId);
+    List<GradeHistory> result = gradeService.findHistoryByGradeId(gradeId);
 
     assertNotNull(result);
     assertEquals(1, result.size());
@@ -131,13 +120,12 @@ class GradeServiceTest {
   }
 
   @Test
-  @DisplayName("findHistoryByGradeId doit lever ResourceNotFoundException si la note est inexistante")
+  @DisplayName(
+      "findHistoryByGradeId doit lever ResourceNotFoundException si la note est inexistante")
   void findHistoryByGradeId_NotFound() {
     when(gradeRepository.findById(gradeId)).thenReturn(Optional.empty());
 
-    assertThrows(
-            ResourceNotFoundException.class,
-            () -> gradeService.findHistoryByGradeId(gradeId));
+    assertThrows(ResourceNotFoundException.class, () -> gradeService.findHistoryByGradeId(gradeId));
 
     verifyNoInteractions(gradeHistoryRepository);
   }
@@ -149,22 +137,16 @@ class GradeServiceTest {
   @Test
   @DisplayName("createGrade doit créer et sauvegarder la note")
   void createGrade_Success() {
-    GradeRequest request =
-            new GradeRequest(studentId, evaluationId, 15.0);
+    GradeRequest request = new GradeRequest(studentId, evaluationId, 15.0);
 
-    when(evaluationService.findById(evaluationId))
-            .thenReturn(evaluation);
+    when(evaluationService.findById(evaluationId)).thenReturn(evaluation);
 
-    when(studentService.findById(studentId))
-            .thenReturn(student);
+    when(studentService.findById(studentId)).thenReturn(student);
 
-    when(
-            gradeRepository.existsByStudentUserIdAndEvaluationId(
-                    studentId, evaluationId))
-            .thenReturn(false);
+    when(gradeRepository.existsByStudentUserIdAndEvaluationId(studentId, evaluationId))
+        .thenReturn(false);
 
-    when(gradeRepository.save(any(Grade.class)))
-            .thenReturn(grade);
+    when(gradeRepository.save(any(Grade.class))).thenReturn(grade);
 
     Grade result = gradeService.createGrade(request);
 
@@ -174,10 +156,7 @@ class GradeServiceTest {
     verify(evaluationService).findById(evaluationId);
     verify(studentService).findById(studentId);
 
-    verify(
-            gradeRepository)
-            .existsByStudentUserIdAndEvaluationId(
-                    studentId, evaluationId);
+    verify(gradeRepository).existsByStudentUserIdAndEvaluationId(studentId, evaluationId);
 
     verify(gradeRepository).save(any(Grade.class));
   }
@@ -185,23 +164,16 @@ class GradeServiceTest {
   @Test
   @DisplayName("createGrade doit lever ConflictException si la note existe déjà")
   void createGrade_Conflict() {
-    GradeRequest request =
-            new GradeRequest(studentId, evaluationId, 15.0);
+    GradeRequest request = new GradeRequest(studentId, evaluationId, 15.0);
 
-    when(evaluationService.findById(evaluationId))
-            .thenReturn(evaluation);
+    when(evaluationService.findById(evaluationId)).thenReturn(evaluation);
 
-    when(studentService.findById(studentId))
-            .thenReturn(student);
+    when(studentService.findById(studentId)).thenReturn(student);
 
-    when(
-            gradeRepository.existsByStudentUserIdAndEvaluationId(
-                    studentId, evaluationId))
-            .thenReturn(true);
+    when(gradeRepository.existsByStudentUserIdAndEvaluationId(studentId, evaluationId))
+        .thenReturn(true);
 
-    assertThrows(
-            ConflictException.class,
-            () -> gradeService.createGrade(request));
+    assertThrows(ConflictException.class, () -> gradeService.createGrade(request));
 
     verify(gradeRepository, never()).save(any(Grade.class));
   }
@@ -209,65 +181,42 @@ class GradeServiceTest {
   @Test
   @DisplayName("createGrade doit lever ValidationException si score supérieur à 20")
   void createGrade_ScoreTooHigh() {
-    GradeRequest request =
-            new GradeRequest(studentId, evaluationId, 25.0);
+    GradeRequest request = new GradeRequest(studentId, evaluationId, 25.0);
 
-    assertThrows(
-            ValidationException.class,
-            () -> gradeService.createGrade(request));
+    assertThrows(ValidationException.class, () -> gradeService.createGrade(request));
 
-    verifyNoInteractions(
-            evaluationService,
-            studentService,
-            gradeRepository);
+    verifyNoInteractions(evaluationService, studentService, gradeRepository);
   }
 
   @Test
   @DisplayName("createGrade doit lever ValidationException si score négatif")
   void createGrade_NegativeScore() {
-    GradeRequest request =
-            new GradeRequest(studentId, evaluationId, -1.0);
+    GradeRequest request = new GradeRequest(studentId, evaluationId, -1.0);
 
-    assertThrows(
-            ValidationException.class,
-            () -> gradeService.createGrade(request));
+    assertThrows(ValidationException.class, () -> gradeService.createGrade(request));
 
-    verifyNoInteractions(
-            evaluationService,
-            studentService,
-            gradeRepository);
+    verifyNoInteractions(evaluationService, studentService, gradeRepository);
   }
 
   @Test
   @DisplayName("createGrade doit lever ValidationException si score null")
   void createGrade_NullScore() {
-    GradeRequest request =
-            new GradeRequest(studentId, evaluationId, null);
+    GradeRequest request = new GradeRequest(studentId, evaluationId, null);
 
-    assertThrows(
-            ValidationException.class,
-            () -> gradeService.createGrade(request));
+    assertThrows(ValidationException.class, () -> gradeService.createGrade(request));
 
-    verifyNoInteractions(
-            evaluationService,
-            studentService,
-            gradeRepository);
+    verifyNoInteractions(evaluationService, studentService, gradeRepository);
   }
 
   @Test
   @DisplayName("createGrade doit propager l'erreur si l'évaluation est introuvable")
   void createGrade_EvaluationNotFound() {
-    GradeRequest request =
-            new GradeRequest(studentId, evaluationId, 15.0);
+    GradeRequest request = new GradeRequest(studentId, evaluationId, 15.0);
 
     when(evaluationService.findById(evaluationId))
-            .thenThrow(
-                    new ResourceNotFoundException(
-                            "Évaluation introuvable"));
+        .thenThrow(new ResourceNotFoundException("Évaluation introuvable"));
 
-    assertThrows(
-            ResourceNotFoundException.class,
-            () -> gradeService.createGrade(request));
+    assertThrows(ResourceNotFoundException.class, () -> gradeService.createGrade(request));
 
     verify(studentService, never()).findById(any());
     verify(gradeRepository, never()).save(any());
@@ -276,26 +225,16 @@ class GradeServiceTest {
   @Test
   @DisplayName("createGrade doit propager l'erreur si le student est introuvable")
   void createGrade_StudentNotFound() {
-    GradeRequest request =
-            new GradeRequest(studentId, evaluationId, 15.0);
+    GradeRequest request = new GradeRequest(studentId, evaluationId, 15.0);
 
-    when(evaluationService.findById(evaluationId))
-            .thenReturn(evaluation);
+    when(evaluationService.findById(evaluationId)).thenReturn(evaluation);
 
     when(studentService.findById(studentId))
-            .thenThrow(
-                    new ResourceNotFoundException(
-                            "Student introuvable"));
+        .thenThrow(new ResourceNotFoundException("Student introuvable"));
 
-    assertThrows(
-            ResourceNotFoundException.class,
-            () -> gradeService.createGrade(request));
+    assertThrows(ResourceNotFoundException.class, () -> gradeService.createGrade(request));
 
-    verify(
-            gradeRepository,
-            never())
-            .existsByStudentUserIdAndEvaluationId(
-                    any(), any());
+    verify(gradeRepository, never()).existsByStudentUserIdAndEvaluationId(any(), any());
 
     verify(gradeRepository, never()).save(any());
   }
@@ -310,31 +249,22 @@ class GradeServiceTest {
     UUID modifiedByUuid = UUID.randomUUID();
 
     GradeUpdateRequest request =
-            new GradeUpdateRequest(
-                    16.0,
-                    "Erreur de correction",
-                    modifiedByUuid.toString());
+        new GradeUpdateRequest(16.0, "Erreur de correction", modifiedByUuid.toString());
 
-    when(gradeRepository.findById(gradeId))
-            .thenReturn(Optional.of(grade));
+    when(gradeRepository.findById(gradeId)).thenReturn(Optional.of(grade));
 
-    when(appUserRepository.findById(modifiedByUuid))
-            .thenReturn(Optional.of(appUser));
+    when(appUserRepository.findById(modifiedByUuid)).thenReturn(Optional.of(appUser));
 
-    when(gradeRepository.save(any(Grade.class)))
-            .thenReturn(grade);
+    when(gradeRepository.save(any(Grade.class))).thenReturn(grade);
 
-    Grade updated =
-            gradeService.updateGrade(gradeId, request);
+    Grade updated = gradeService.updateGrade(gradeId, request);
 
     assertNotNull(updated);
     assertEquals(16.0, updated.getScore());
 
-    verify(gradeHistoryRepository)
-            .save(any(GradeHistory.class));
+    verify(gradeHistoryRepository).save(any(GradeHistory.class));
 
-    verify(gradeRepository)
-            .save(grade);
+    verify(gradeRepository).save(grade);
   }
 
   @Test
@@ -343,49 +273,33 @@ class GradeServiceTest {
     UUID modifiedByUuid = UUID.randomUUID();
 
     GradeUpdateRequest request =
-            new GradeUpdateRequest(
-                    16.0,
-                    "Erreur de correction",
-                    modifiedByUuid.toString());
+        new GradeUpdateRequest(16.0, "Erreur de correction", modifiedByUuid.toString());
 
-    when(gradeRepository.findById(gradeId))
-            .thenReturn(Optional.empty());
+    when(gradeRepository.findById(gradeId)).thenReturn(Optional.empty());
 
-    assertThrows(
-            ResourceNotFoundException.class,
-            () -> gradeService.updateGrade(gradeId, request));
+    assertThrows(ResourceNotFoundException.class, () -> gradeService.updateGrade(gradeId, request));
 
-    verifyNoInteractions(
-            appUserRepository,
-            gradeHistoryRepository);
+    verifyNoInteractions(appUserRepository, gradeHistoryRepository);
   }
 
   @Test
-  @DisplayName("updateGrade doit lever ResourceNotFoundException si le modificateur est introuvable")
+  @DisplayName(
+      "updateGrade doit lever ResourceNotFoundException si le modificateur est introuvable")
   void updateGrade_ModifierNotFound() {
     UUID modifiedByUuid = UUID.randomUUID();
 
     GradeUpdateRequest request =
-            new GradeUpdateRequest(
-                    16.0,
-                    "Erreur de correction",
-                    modifiedByUuid.toString());
+        new GradeUpdateRequest(16.0, "Erreur de correction", modifiedByUuid.toString());
 
-    when(gradeRepository.findById(gradeId))
-            .thenReturn(Optional.of(grade));
+    when(gradeRepository.findById(gradeId)).thenReturn(Optional.of(grade));
 
-    when(appUserRepository.findById(modifiedByUuid))
-            .thenReturn(Optional.empty());
+    when(appUserRepository.findById(modifiedByUuid)).thenReturn(Optional.empty());
 
-    assertThrows(
-            ResourceNotFoundException.class,
-            () -> gradeService.updateGrade(gradeId, request));
+    assertThrows(ResourceNotFoundException.class, () -> gradeService.updateGrade(gradeId, request));
 
-    verify(gradeHistoryRepository, never())
-            .save(any(GradeHistory.class));
+    verify(gradeHistoryRepository, never()).save(any(GradeHistory.class));
 
-    verify(gradeRepository, never())
-            .save(any(Grade.class));
+    verify(gradeRepository, never()).save(any(Grade.class));
   }
 
   @Test
@@ -393,20 +307,11 @@ class GradeServiceTest {
   void updateGrade_ScoreTooHigh() {
     UUID modifiedByUuid = UUID.randomUUID();
 
-    GradeUpdateRequest request =
-            new GradeUpdateRequest(
-                    21.0,
-                    "Erreur",
-                    modifiedByUuid.toString());
+    GradeUpdateRequest request = new GradeUpdateRequest(21.0, "Erreur", modifiedByUuid.toString());
 
-    assertThrows(
-            ValidationException.class,
-            () -> gradeService.updateGrade(gradeId, request));
+    assertThrows(ValidationException.class, () -> gradeService.updateGrade(gradeId, request));
 
-    verifyNoInteractions(
-            gradeRepository,
-            appUserRepository,
-            gradeHistoryRepository);
+    verifyNoInteractions(gradeRepository, appUserRepository, gradeHistoryRepository);
   }
 
   @Test
@@ -414,20 +319,11 @@ class GradeServiceTest {
   void updateGrade_NegativeScore() {
     UUID modifiedByUuid = UUID.randomUUID();
 
-    GradeUpdateRequest request =
-            new GradeUpdateRequest(
-                    -1.0,
-                    "Erreur",
-                    modifiedByUuid.toString());
+    GradeUpdateRequest request = new GradeUpdateRequest(-1.0, "Erreur", modifiedByUuid.toString());
 
-    assertThrows(
-            ValidationException.class,
-            () -> gradeService.updateGrade(gradeId, request));
+    assertThrows(ValidationException.class, () -> gradeService.updateGrade(gradeId, request));
 
-    verifyNoInteractions(
-            gradeRepository,
-            appUserRepository,
-            gradeHistoryRepository);
+    verifyNoInteractions(gradeRepository, appUserRepository, gradeHistoryRepository);
   }
 
   @Test
@@ -435,20 +331,11 @@ class GradeServiceTest {
   void updateGrade_NullScore() {
     UUID modifiedByUuid = UUID.randomUUID();
 
-    GradeUpdateRequest request =
-            new GradeUpdateRequest(
-                    null,
-                    "Erreur",
-                    modifiedByUuid.toString());
+    GradeUpdateRequest request = new GradeUpdateRequest(null, "Erreur", modifiedByUuid.toString());
 
-    assertThrows(
-            ValidationException.class,
-            () -> gradeService.updateGrade(gradeId, request));
+    assertThrows(ValidationException.class, () -> gradeService.updateGrade(gradeId, request));
 
-    verifyNoInteractions(
-            gradeRepository,
-            appUserRepository,
-            gradeHistoryRepository);
+    verifyNoInteractions(gradeRepository, appUserRepository, gradeHistoryRepository);
   }
 
   // =========================================================
@@ -458,32 +345,25 @@ class GradeServiceTest {
   @Test
   @DisplayName("publishGradesForEvaluation passe les notes en publié")
   void publishGradesForEvaluation_Success() {
-    when(evaluationService.findById(evaluationId))
-            .thenReturn(evaluation);
+    when(evaluationService.findById(evaluationId)).thenReturn(evaluation);
 
-    when(
-            gradeRepository.findAllByEvaluationIdAndPublishedFalse(
-                    evaluationId))
-            .thenReturn(List.of(grade));
+    when(gradeRepository.findAllByEvaluationIdAndPublishedFalse(evaluationId))
+        .thenReturn(List.of(grade));
 
     gradeService.publishGradesForEvaluation(evaluationId);
 
     assertTrue(grade.getPublished());
 
-    verify(gradeRepository)
-            .saveAll(anyList());
+    verify(gradeRepository).saveAll(anyList());
   }
 
   @Test
   @DisplayName("publishGradesForEvaluation doit gérer une liste vide")
   void publishGradesForEvaluation_Empty() {
-    when(evaluationService.findById(evaluationId))
-            .thenReturn(evaluation);
+    when(evaluationService.findById(evaluationId)).thenReturn(evaluation);
 
-    when(
-            gradeRepository.findAllByEvaluationIdAndPublishedFalse(
-                    evaluationId))
-            .thenReturn(List.of());
+    when(gradeRepository.findAllByEvaluationIdAndPublishedFalse(evaluationId))
+        .thenReturn(List.of());
 
     gradeService.publishGradesForEvaluation(evaluationId);
 
@@ -494,18 +374,13 @@ class GradeServiceTest {
   @DisplayName("publishGradesForEvaluation doit propager l'erreur si l'évaluation est introuvable")
   void publishGradesForEvaluation_EvaluationNotFound() {
     when(evaluationService.findById(evaluationId))
-            .thenThrow(
-                    new ResourceNotFoundException(
-                            "Évaluation introuvable"));
+        .thenThrow(new ResourceNotFoundException("Évaluation introuvable"));
 
     assertThrows(
-            ResourceNotFoundException.class,
-            () -> gradeService.publishGradesForEvaluation(evaluationId));
+        ResourceNotFoundException.class,
+        () -> gradeService.publishGradesForEvaluation(evaluationId));
 
-    verify(
-            gradeRepository,
-            never())
-            .findAllByEvaluationIdAndPublishedFalse(any());
+    verify(gradeRepository, never()).findAllByEvaluationIdAndPublishedFalse(any());
   }
 
   // =========================================================
@@ -515,59 +390,41 @@ class GradeServiceTest {
   @Test
   @DisplayName("findGrades avec studentId et evaluationId sans filtre publié")
   void findGrades_StudentAndEvaluation() {
-    when(
-            gradeRepository.findByStudentUserIdAndEvaluationId(
-                    studentId, evaluationId))
-            .thenReturn(List.of(grade));
+    when(gradeRepository.findByStudentUserIdAndEvaluationId(studentId, evaluationId))
+        .thenReturn(List.of(grade));
 
-    List<Grade> result =
-            gradeService.findGrades(
-                    studentId,
-                    evaluationId,
-                    null);
+    List<Grade> result = gradeService.findGrades(studentId, evaluationId, null);
 
     assertEquals(1, result.size());
 
-    verify(
-            gradeRepository)
-            .findByStudentUserIdAndEvaluationId(
-                    studentId, evaluationId);
+    verify(gradeRepository).findByStudentUserIdAndEvaluationId(studentId, evaluationId);
   }
 
   @Test
   @DisplayName("findGrades avec studentId et evaluationId et published=true")
   void findGrades_StudentAndEvaluation_PublishedTrue() {
     Grade publishedGrade =
-            Grade.builder()
-                    .id(UUID.randomUUID())
-                    .student(student)
-                    .evaluation(evaluation)
-                    .score(15.0)
-                    .published(true)
-                    .build();
+        Grade.builder()
+            .id(UUID.randomUUID())
+            .student(student)
+            .evaluation(evaluation)
+            .score(15.0)
+            .published(true)
+            .build();
 
     Grade unpublishedGrade =
-            Grade.builder()
-                    .id(UUID.randomUUID())
-                    .student(student)
-                    .evaluation(evaluation)
-                    .score(10.0)
-                    .published(false)
-                    .build();
+        Grade.builder()
+            .id(UUID.randomUUID())
+            .student(student)
+            .evaluation(evaluation)
+            .score(10.0)
+            .published(false)
+            .build();
 
-    when(
-            gradeRepository.findByStudentUserIdAndEvaluationId(
-                    studentId, evaluationId))
-            .thenReturn(
-                    List.of(
-                            publishedGrade,
-                            unpublishedGrade));
+    when(gradeRepository.findByStudentUserIdAndEvaluationId(studentId, evaluationId))
+        .thenReturn(List.of(publishedGrade, unpublishedGrade));
 
-    List<Grade> result =
-            gradeService.findGrades(
-                    studentId,
-                    evaluationId,
-                    true);
+    List<Grade> result = gradeService.findGrades(studentId, evaluationId, true);
 
     assertEquals(1, result.size());
     assertTrue(result.get(0).getPublished());
@@ -577,36 +434,27 @@ class GradeServiceTest {
   @DisplayName("findGrades avec studentId et evaluationId et published=false")
   void findGrades_StudentAndEvaluation_PublishedFalse() {
     Grade publishedGrade =
-            Grade.builder()
-                    .id(UUID.randomUUID())
-                    .student(student)
-                    .evaluation(evaluation)
-                    .score(15.0)
-                    .published(true)
-                    .build();
+        Grade.builder()
+            .id(UUID.randomUUID())
+            .student(student)
+            .evaluation(evaluation)
+            .score(15.0)
+            .published(true)
+            .build();
 
     Grade unpublishedGrade =
-            Grade.builder()
-                    .id(UUID.randomUUID())
-                    .student(student)
-                    .evaluation(evaluation)
-                    .score(10.0)
-                    .published(false)
-                    .build();
+        Grade.builder()
+            .id(UUID.randomUUID())
+            .student(student)
+            .evaluation(evaluation)
+            .score(10.0)
+            .published(false)
+            .build();
 
-    when(
-            gradeRepository.findByStudentUserIdAndEvaluationId(
-                    studentId, evaluationId))
-            .thenReturn(
-                    List.of(
-                            publishedGrade,
-                            unpublishedGrade));
+    when(gradeRepository.findByStudentUserIdAndEvaluationId(studentId, evaluationId))
+        .thenReturn(List.of(publishedGrade, unpublishedGrade));
 
-    List<Grade> result =
-            gradeService.findGrades(
-                    studentId,
-                    evaluationId,
-                    false);
+    List<Grade> result = gradeService.findGrades(studentId, evaluationId, false);
 
     assertEquals(1, result.size());
     assertFalse(result.get(0).getPublished());
@@ -615,92 +463,58 @@ class GradeServiceTest {
   @Test
   @DisplayName("findGrades avec studentId seulement")
   void findGrades_StudentOnly() {
-    when(
-            gradeRepository.findByStudentUserId(studentId))
-            .thenReturn(List.of(grade));
+    when(gradeRepository.findByStudentUserId(studentId)).thenReturn(List.of(grade));
 
-    List<Grade> result =
-            gradeService.findGrades(
-                    studentId,
-                    null,
-                    null);
+    List<Grade> result = gradeService.findGrades(studentId, null, null);
 
     assertEquals(1, result.size());
 
-    verify(gradeRepository)
-            .findByStudentUserId(studentId);
+    verify(gradeRepository).findByStudentUserId(studentId);
   }
 
   @Test
   @DisplayName("findGrades avec evaluationId et published=true")
   void findGrades_EvaluationAndPublished() {
-    when(
-            gradeRepository.findByEvaluationIdAndPublished(
-                    evaluationId, true))
-            .thenReturn(List.of(grade));
+    when(gradeRepository.findByEvaluationIdAndPublished(evaluationId, true))
+        .thenReturn(List.of(grade));
 
-    List<Grade> result =
-            gradeService.findGrades(
-                    null,
-                    evaluationId,
-                    true);
+    List<Grade> result = gradeService.findGrades(null, evaluationId, true);
 
     assertEquals(1, result.size());
 
-    verify(gradeRepository)
-            .findByEvaluationIdAndPublished(
-                    evaluationId, true);
+    verify(gradeRepository).findByEvaluationIdAndPublished(evaluationId, true);
   }
 
   @Test
   @DisplayName("findGrades avec evaluationId sans filtre published")
   void findGrades_EvaluationOnly() {
-    when(
-            gradeRepository.findByEvaluationId(evaluationId))
-            .thenReturn(List.of(grade));
+    when(gradeRepository.findByEvaluationId(evaluationId)).thenReturn(List.of(grade));
 
-    List<Grade> result =
-            gradeService.findGrades(
-                    null,
-                    evaluationId,
-                    null);
+    List<Grade> result = gradeService.findGrades(null, evaluationId, null);
 
     assertEquals(1, result.size());
 
-    verify(gradeRepository)
-            .findByEvaluationId(evaluationId);
+    verify(gradeRepository).findByEvaluationId(evaluationId);
   }
 
   @Test
   @DisplayName("findGrades avec published seulement")
   void findGrades_PublishedOnly() {
-    when(
-            gradeRepository.findByPublished(true))
-            .thenReturn(List.of(grade));
+    when(gradeRepository.findByPublished(true)).thenReturn(List.of(grade));
 
-    List<Grade> result =
-            gradeService.findGrades(
-                    null,
-                    null,
-                    true);
+    List<Grade> result = gradeService.findGrades(null, null, true);
 
     assertEquals(1, result.size());
 
-    verify(gradeRepository)
-            .findByPublished(true);
+    verify(gradeRepository).findByPublished(true);
   }
 
   @Test
   @DisplayName("findGrades sans aucun filtre")
   void findGrades_NoFilter() {
-    when(gradeRepository.findAll())
-            .thenReturn(List.of(grade));
+    when(gradeRepository.findAll()).thenReturn(List.of(grade));
 
-    List<Grade> result =
-            gradeService.findGrades(
-                    null,
-                    null,
-                    null);
+    List<Grade> result = gradeService.findGrades(null, null, null);
 
     assertEquals(1, result.size());
 
@@ -715,20 +529,17 @@ class GradeServiceTest {
   @DisplayName("calculateStudentAverage doit retourner 0 si aucune note publiée")
   void calculateStudentAverage_NoPublishedGrades() {
     Grade unpublishedGrade =
-            Grade.builder()
-                    .id(UUID.randomUUID())
-                    .student(student)
-                    .evaluation(evaluation)
-                    .score(15.0)
-                    .published(false)
-                    .build();
+        Grade.builder()
+            .id(UUID.randomUUID())
+            .student(student)
+            .evaluation(evaluation)
+            .score(15.0)
+            .published(false)
+            .build();
 
-    when(
-            gradeRepository.findByStudentUserId(studentId))
-            .thenReturn(List.of(unpublishedGrade));
+    when(gradeRepository.findByStudentUserId(studentId)).thenReturn(List.of(unpublishedGrade));
 
-    Double result =
-            gradeService.calculateStudentAverage(studentId);
+    Double result = gradeService.calculateStudentAverage(studentId);
 
     assertEquals(0.0, result);
   }
@@ -736,12 +547,9 @@ class GradeServiceTest {
   @Test
   @DisplayName("calculateStudentAverage doit retourner 0 si aucune note")
   void calculateStudentAverage_NoGrades() {
-    when(
-            gradeRepository.findByStudentUserId(studentId))
-            .thenReturn(List.of());
+    when(gradeRepository.findByStudentUserId(studentId)).thenReturn(List.of());
 
-    Double result =
-            gradeService.calculateStudentAverage(studentId);
+    Double result = gradeService.calculateStudentAverage(studentId);
 
     assertEquals(0.0, result);
   }
@@ -749,73 +557,53 @@ class GradeServiceTest {
   @Test
   @DisplayName("calculateStudentAverage doit calculer la moyenne pondérée")
   void calculateStudentAverage_Success() {
-    Evaluation evaluation1 =
-            Evaluation.builder()
-                    .id(UUID.randomUUID())
-                    .coefficient(1.0)
-                    .build();
+    Evaluation evaluation1 = Evaluation.builder().id(UUID.randomUUID()).coefficient(1.0).build();
 
-    Evaluation evaluation2 =
-            Evaluation.builder()
-                    .id(UUID.randomUUID())
-                    .coefficient(2.0)
-                    .build();
+    Evaluation evaluation2 = Evaluation.builder().id(UUID.randomUUID()).coefficient(2.0).build();
 
     Grade grade1 =
-            Grade.builder()
-                    .id(UUID.randomUUID())
-                    .student(student)
-                    .evaluation(evaluation1)
-                    .score(10.0)
-                    .published(true)
-                    .build();
+        Grade.builder()
+            .id(UUID.randomUUID())
+            .student(student)
+            .evaluation(evaluation1)
+            .score(10.0)
+            .published(true)
+            .build();
 
     Grade grade2 =
-            Grade.builder()
-                    .id(UUID.randomUUID())
-                    .student(student)
-                    .evaluation(evaluation2)
-                    .score(20.0)
-                    .published(true)
-                    .build();
+        Grade.builder()
+            .id(UUID.randomUUID())
+            .student(student)
+            .evaluation(evaluation2)
+            .score(20.0)
+            .published(true)
+            .build();
 
-    when(
-            gradeRepository.findByStudentUserId(studentId))
-            .thenReturn(List.of(grade1, grade2));
+    when(gradeRepository.findByStudentUserId(studentId)).thenReturn(List.of(grade1, grade2));
 
-    Double result =
-            gradeService.calculateStudentAverage(studentId);
+    Double result = gradeService.calculateStudentAverage(studentId);
 
-    assertEquals(
-            16.6666666667,
-            result,
-            0.000001);
+    assertEquals(16.6666666667, result, 0.000001);
   }
 
   @Test
   @DisplayName("calculateStudentAverage doit retourner 0 si la somme des coefficients vaut 0")
   void calculateStudentAverage_ZeroCoefficient() {
     Evaluation zeroCoefficientEvaluation =
-            Evaluation.builder()
-                    .id(UUID.randomUUID())
-                    .coefficient(0.0)
-                    .build();
+        Evaluation.builder().id(UUID.randomUUID()).coefficient(0.0).build();
 
     Grade zeroCoefficientGrade =
-            Grade.builder()
-                    .id(UUID.randomUUID())
-                    .student(student)
-                    .evaluation(zeroCoefficientEvaluation)
-                    .score(15.0)
-                    .published(true)
-                    .build();
+        Grade.builder()
+            .id(UUID.randomUUID())
+            .student(student)
+            .evaluation(zeroCoefficientEvaluation)
+            .score(15.0)
+            .published(true)
+            .build();
 
-    when(
-            gradeRepository.findByStudentUserId(studentId))
-            .thenReturn(List.of(zeroCoefficientGrade));
+    when(gradeRepository.findByStudentUserId(studentId)).thenReturn(List.of(zeroCoefficientGrade));
 
-    Double result =
-            gradeService.calculateStudentAverage(studentId);
+    Double result = gradeService.calculateStudentAverage(studentId);
 
     assertEquals(0.0, result);
   }

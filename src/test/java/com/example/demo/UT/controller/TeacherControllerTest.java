@@ -22,88 +22,89 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class TeacherControllerTest {
 
-    @Mock private TeacherService teacherService;
+  @Mock private TeacherService teacherService;
 
-    @Mock private TeacherMapper teacherMapper;
+  @Mock private TeacherMapper teacherMapper;
 
-    @InjectMocks private TeacherController teacherController;
+  @InjectMocks private TeacherController teacherController;
 
-    private UUID teacherId;
-    private Teacher teacher;
-    private TeacherResponse response;
+  private UUID teacherId;
+  private Teacher teacher;
+  private TeacherResponse response;
 
-    @BeforeEach
-    void setUp() {
-        teacherId = UUID.randomUUID();
+  @BeforeEach
+  void setUp() {
+    teacherId = UUID.randomUUID();
 
-        teacher = Teacher.builder().userId(teacherId).specialite("Informatique").build();
+    teacher = Teacher.builder().userId(teacherId).specialite("Informatique").build();
 
-        // TeacherResponse est un record (comme StudentResponse, CourseResponse...) : les
-        // records sont des classes `final`, donc Mockito ne peut pas les mocker avec
-        // mock(...). On construit une vraie instance à la place.
-        response = new TeacherResponse(teacherId, "Toky Ramarozaka", "toky@gmail.com", "Informatique");
-    }
+    // TeacherResponse est un record (comme StudentResponse, CourseResponse...) : les
+    // records sont des classes `final`, donc Mockito ne peut pas les mocker avec
+    // mock(...). On construit une vraie instance à la place.
+    response = new TeacherResponse(teacherId, "Toky Ramarozaka", "toky@gmail.com", "Informatique");
+  }
 
-    @Test
-    @DisplayName("list doit retourner tous les enseignants")
-    void list_Success() {
-        when(teacherService.findAll()).thenReturn(List.of(teacher));
-        when(teacherMapper.toResponse(teacher)).thenReturn(response);
+  @Test
+  @DisplayName("list doit retourner tous les enseignants")
+  void list_Success() {
+    when(teacherService.findAll()).thenReturn(List.of(teacher));
+    when(teacherMapper.toResponse(teacher)).thenReturn(response);
 
-        List<TeacherResponse> result = teacherController.list();
+    List<TeacherResponse> result = teacherController.list();
 
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(response, result.get(0));
+    assertNotNull(result);
+    assertEquals(1, result.size());
+    assertEquals(response, result.get(0));
 
-        verify(teacherService).findAll();
-        verify(teacherMapper).toResponse(teacher);
-    }
+    verify(teacherService).findAll();
+    verify(teacherMapper).toResponse(teacher);
+  }
 
-    @Test
-    @DisplayName("detail doit retourner un enseignant par son ID")
-    void detail_Success() {
-        when(teacherService.findById(teacherId)).thenReturn(teacher);
-        when(teacherMapper.toResponse(teacher)).thenReturn(response);
+  @Test
+  @DisplayName("detail doit retourner un enseignant par son ID")
+  void detail_Success() {
+    when(teacherService.findById(teacherId)).thenReturn(teacher);
+    when(teacherMapper.toResponse(teacher)).thenReturn(response);
 
-        TeacherResponse result = teacherController.detail(teacherId);
+    TeacherResponse result = teacherController.detail(teacherId);
 
-        assertNotNull(result);
-        assertEquals(response, result);
+    assertNotNull(result);
+    assertEquals(response, result);
 
-        verify(teacherService).findById(teacherId);
-        verify(teacherMapper).toResponse(teacher);
-    }
+    verify(teacherService).findById(teacherId);
+    verify(teacherMapper).toResponse(teacher);
+  }
 
-    @Test
-    @DisplayName("create doit créer un enseignant et retourner sa réponse")
-    void create_Success() {
-        TeacherCreateRequest request =
-                new TeacherCreateRequest("toky@gmail.com", "teacher123", "Toky", "Ramarozaka", "Informatique");
+  @Test
+  @DisplayName("create doit créer un enseignant et retourner sa réponse")
+  void create_Success() {
+    TeacherCreateRequest request =
+        new TeacherCreateRequest(
+            "toky@gmail.com", "teacher123", "Toky", "Ramarozaka", "Informatique");
 
-        when(teacherService.create(
-                request.email(),
-                request.password(),
-                request.firstName(),
-                request.lastName(),
-                request.specialite()))
-                .thenReturn(teacher);
+    when(teacherService.create(
+            request.email(),
+            request.password(),
+            request.firstName(),
+            request.lastName(),
+            request.specialite()))
+        .thenReturn(teacher);
 
-        when(teacherMapper.toResponse(teacher)).thenReturn(response);
+    when(teacherMapper.toResponse(teacher)).thenReturn(response);
 
-        TeacherResponse result = teacherController.create(request);
+    TeacherResponse result = teacherController.create(request);
 
-        assertNotNull(result);
-        assertEquals(response, result);
+    assertNotNull(result);
+    assertEquals(response, result);
 
-        verify(teacherService)
-                .create(
-                        request.email(),
-                        request.password(),
-                        request.firstName(),
-                        request.lastName(),
-                        request.specialite());
+    verify(teacherService)
+        .create(
+            request.email(),
+            request.password(),
+            request.firstName(),
+            request.lastName(),
+            request.specialite());
 
-        verify(teacherMapper).toResponse(teacher);
-    }
+    verify(teacherMapper).toResponse(teacher);
+  }
 }
