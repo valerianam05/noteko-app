@@ -30,14 +30,13 @@ public class BearerAuthFilter extends OncePerRequestFilter {
       @NonNull FilterChain filterChain)
       throws ServletException, IOException {
 
-    final String authHeader = request.getHeader("Authorization");
+    final String jwt = extractToken(request);
 
-    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+    if (jwt == null) {
       filterChain.doFilter(request, response);
       return;
     }
 
-    final String jwt = authHeader.substring(7);
     final String userEmail = jwtService.extractUsername(jwt);
 
     if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -53,5 +52,22 @@ public class BearerAuthFilter extends OncePerRequestFilter {
     }
 
     filterChain.doFilter(request, response);
+  }
+
+  private String extractToken(HttpServletRequest request) {
+    final String authHeader = request.getHeader("Authorization");
+    if (authHeader != null && authHeader.startsWith("Bearer ")) {
+      return authHeader.substring(7);
+    }
+
+    if (request.getCookies() != null) {
+      for (var cookie : request.getCookies()) {
+        if ("jwt".equals(cookie.getName())) {
+          return cookie.getValue();
+        }
+      }
+    }
+
+    return null;
   }
 }

@@ -1,4 +1,4 @@
-package com.example.demo.endpoint.rest.controller.grade.Promotion;
+package com.example.demo.endpoint.rest.controller.grade;
 
 import com.example.demo.dto.request.PromotionRequest;
 import com.example.demo.dto.response.PromotionResponse;

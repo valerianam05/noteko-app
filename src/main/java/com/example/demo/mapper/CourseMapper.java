@@ -1,20 +1,19 @@
 package com.example.demo.mapper;
 
 import com.example.demo.dto.response.CourseResponse;
-import com.example.demo.model.Course;
+import com.example.demo.entity.Course;
 
-public final class CourseMapper {
+public class CourseMapper {
+
   private CourseMapper() {}
 
-  public static CourseResponse toResponse(Course model) {
-    if (model == null) return null;
-
+  public static CourseResponse toResponse(Course course) {
     return new CourseResponse(
-        model.getId(),
-        model.getCode(),
-        model.getName(),
-        model.getCredits(),
-        model.getUeId(),
-        model.getParcours());
+        course.getId(),
+        course.getCode(),
+        course.getTitle(),
+        course.getCredits(),
+        course.getParcours(),
+        course.getSemester().getId());
   }
 }

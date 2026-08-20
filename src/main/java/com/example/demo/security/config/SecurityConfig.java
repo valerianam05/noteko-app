@@ -14,7 +14,6 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -43,15 +42,26 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http, BearerAuthFilter bearerAuthFilter)
       throws Exception {
-    return http.csrf(AbstractHttpConfigurer::disable)
+    return http.csrf(csrf -> csrf.disable())
         .sessionManagement(sm -> sm.sessionCreationPolicy(STATELESS))
         .exceptionHandling(
             e -> e.authenticationEntryPoint(entryPoint).accessDeniedHandler(accessDeniedHandler))
         .authorizeHttpRequests(
             auth ->
-                auth.requestMatchers("/auth/login", "/ping", "/health/**")
+                auth.requestMatchers("/api/auth/login", "/ping", "/health/**")
                     .permitAll()
+                    .requestMatchers(
+                        HttpMethod.POST,
+                        "/api/students",
+                        "/api/teachers",
+                        "/api/groups",
+                        "/api/promotions",
+                        "/api/courses",
+                        "/api/academic-years")
+                    .hasRole("ADMIN")
                     .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
+                    .permitAll()
+                    .requestMatchers("/ui/**", "/css/**", "/js/**")
                     .permitAll()
                     .requestMatchers("/api/users", "/api/users/**")
                     .hasRole("ADMIN")

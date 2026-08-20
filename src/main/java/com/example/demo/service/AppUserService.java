@@ -8,6 +8,7 @@ import com.example.demo.repository.AppUserRepository;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional
 public class AppUserService {
-
+  private final PasswordEncoder passwordEncoder;
   private final AppUserRepository appUserRepository;
 
   public List<AppUser> findAll() {
@@ -36,7 +37,7 @@ public class AppUserService {
     AppUser user =
         AppUser.builder()
             .email(email)
-            .password(rawPassword)
+            .password(passwordEncoder.encode(rawPassword))
             .firstName(firstName)
             .lastName(lastName)
             .role(role)

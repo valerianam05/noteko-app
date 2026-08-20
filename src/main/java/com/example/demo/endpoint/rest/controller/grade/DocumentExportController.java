@@ -38,9 +38,10 @@ public class DocumentExportController {
     return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
   }
 
-  @PostMapping("/transcript/send-email")
+  @PostMapping("/api/students/{std}/transcript/send-email")
   public ResponseEntity<DocumentExportResponse> sendTranscriptEmail(
-      @PathVariable String std, @RequestParam(required = false) String semesterCode) {
+      @PathVariable String std,
+      @RequestParam(required = false, defaultValue = "ALL") String semesterCode) {
     DocumentExportResponse response = documentExportService.exportTranscriptPdf(std, semesterCode);
     return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
   }
