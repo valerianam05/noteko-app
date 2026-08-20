@@ -13,9 +13,7 @@ import com.example.demo.entity.DocumentExport;
 import com.example.demo.entity.enums.ExportFileType;
 import com.example.demo.entity.enums.ExportStatus;
 import com.example.demo.mail.Mailer;
-import com.example.demo.repository.AcademicYearRepository;
-import com.example.demo.repository.DocumentExportRepository;
-import com.example.demo.repository.PromotionRepository;
+import com.example.demo.repository.*;
 import com.example.demo.service.AcademicYearService;
 import com.example.demo.service.DocumentExportService;
 import com.example.demo.service.GraduatesExcelGenerator;
@@ -59,10 +57,13 @@ class DocumentExportServiceIT extends FacadeIT {
 
   @MockBean private Mailer mailer;
 
+  @MockBean private CourseValidationRepository courseValidationRepository;
+
   private AcademicYear persistedAcademicYear;
 
   @BeforeEach
   void cleanDatabase() {
+
     documentExportRepository.deleteAll();
     promotionRepository.deleteAll();
     academicYearRepository.deleteAll();
@@ -123,6 +124,7 @@ class DocumentExportServiceIT extends FacadeIT {
     var exports = documentExportService.findExports(null, null, null);
 
     assertThat(exports).hasSize(2);
+
     assertThat(exports)
         .extracting(DocumentExportResponse::status)
         .contains(ExportStatus.PENDING, ExportStatus.GENERATED);

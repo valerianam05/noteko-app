@@ -15,6 +15,10 @@ import com.example.demo.repository.CourseValidationRepository;
 import com.example.demo.repository.DocumentExportRepository;
 import com.example.demo.service.event.S3Service;
 import jakarta.mail.internet.InternetAddress;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -46,6 +50,7 @@ public class DocumentExportService {
   @Transactional(readOnly = true)
   public List<DocumentExportResponse> findExports(
       UUID studentId, UUID promotionId, UUID academicYearId) {
+
     return findExportsByCriteria(studentId, promotionId, academicYearId).stream()
         .map(this::toModel)
         .map(DocumentExportMapper::toResponse)
@@ -68,7 +73,6 @@ public class DocumentExportService {
             .status(ExportStatus.PENDING)
             .generatedAt(OffsetDateTime.now().toLocalDateTime())
             .build();
-
     DocumentExport saved = documentExportRepository.save(export);
 
     processGraduatesExportAsync(saved.getId(), promotionId);
@@ -89,7 +93,6 @@ public class DocumentExportService {
             .build();
 
     DocumentExport saved = documentExportRepository.save(export);
-
     processTranscriptExportAsync(saved.getId(), std, semesterCode);
 
     return DocumentExportMapper.toResponse(toModel(saved));
@@ -97,13 +100,16 @@ public class DocumentExportService {
 
   @Async
   public void processGraduatesExportAsync(UUID exportId, UUID promotionId) {
+
     DocumentExport export = documentExportRepository.findById(exportId).orElse(null);
+
     if (export == null) {
       log.error("Export introuvable pour ID : {}", exportId);
       return;
     }
     try {
       byte[] excelBytes = excelGenerator.generate(promotionId);
+
       String fileName = "diplomes_promo_" + promotionId + ".xlsx";
 
       String presignedUrl =
@@ -111,71 +117,125 @@ public class DocumentExportService {
 
       export.setS3Key(presignedUrl);
       export.setStatus(ExportStatus.GENERATED);
+
     } catch (Exception e) {
+
       log.error("Échec de la génération de l'export diplômés {}", exportId, e);
+
       export.setStatus(ExportStatus.FAILED);
     }
+
     documentExportRepository.save(export);
   }
 
   @Async
   public void processTranscriptExportAsync(UUID exportId, String std, String semesterCode) {
+
     DocumentExport export = documentExportRepository.findById(exportId).orElse(null);
+
     if (export == null) {
       log.error("Export introuvable pour ID : {}", exportId);
       return;
     }
+
+    Path temporaryDirectory = null;
+    File pdfFile = null;
+
     try {
       Student student = studentService.findByStdNumber(std);
+
       List<CourseValidation> validations =
           courseValidationRepository.findByStudent_UserId(student.getUserId());
-
       byte[] pdfBytes =
           transcriptPdfGenerator.generateTranscriptPdf(student, semesterCode, validations);
+
       String fileName = "releve_notes_" + std + "_" + semesterCode + ".pdf";
 
-      String presignedUrl =
-          s3Service.uploadPdfAndGenerateUrl(pdfBytes, fileName, student.getUserId().toString());
+      log.info("PDF du relevé généré : {}", fileName);
 
-      export.setS3Key(presignedUrl);
+      temporaryDirectory = Files.createTempDirectory("transcript-export-");
+
+      Path pdfPath = temporaryDirectory.resolve(fileName);
+
+      Files.write(pdfPath, pdfBytes);
+
+      pdfFile = pdfPath.toFile();
+
+      log.info("Fichier PDF temporaire créé : {}", pdfFile.getAbsolutePath());
 
       String recipientEmail = student.getAppUser() != null ? student.getAppUser().getEmail() : null;
-      if (recipientEmail != null && !recipientEmail.isBlank()) {
 
-        String htmlBody =
-            "<p>Bonjour "
-                + student.getFirstName()
-                + ",</p>"
-                + "<p>Votre relevé de notes pour le semestre "
-                + semesterCode
-                + " est disponible.</p>"
-                + "<p>Vous pouvez le télécharger directement ici : <a href=\""
-                + presignedUrl
-                + "\">Télécharger mon relevé (PDF)</a></p>"
-                + "<p>Cordialement,<br/>L'équipe pédagogique</p>";
+      if (recipientEmail == null || recipientEmail.isBlank()) {
 
-        Email email =
-            new Email(
-                new InternetAddress(recipientEmail),
-                List.of(),
-                List.of(),
-                "Votre relevé de notes - " + semesterCode,
-                htmlBody,
-                List.of());
-
-        mailer.accept(email);
-        export.setSentAt(OffsetDateTime.now().toLocalDateTime());
+        throw new IllegalStateException("L'étudiant " + std + " ne possède pas d'adresse email.");
       }
 
+      String htmlBody =
+          "<p>Bonjour "
+              + student.getFirstName()
+              + ",</p>"
+              + "<p>Veuillez trouver ci-joint votre "
+              + "relevé de notes pour le semestre "
+              + semesterCode
+              + ".</p>"
+              + "<p>Votre relevé est disponible "
+              + "au format PDF en pièce jointe.</p>"
+              + "<p>Cordialement,<br/>"
+              + "L'équipe pédagogique</p>";
+
+      Email email =
+          new Email(
+              new InternetAddress(recipientEmail),
+              List.of(),
+              List.of(),
+              "Votre relevé de notes - " + semesterCode,
+              htmlBody,
+              List.of(pdfFile));
+
+      mailer.accept(email);
+
+      log.info("Relevé de notes envoyé avec succès à {}", recipientEmail);
+      export.setSentAt(OffsetDateTime.now().toLocalDateTime());
+
       export.setStatus(ExportStatus.GENERATED);
+
     } catch (Exception e) {
-      log.error("Échec de la génération du relevé PDF {}", exportId, e);
+
+      log.error("Échec de la génération ou de l'envoi " + "du relevé PDF {}", exportId, e);
       export.setStatus(ExportStatus.FAILED);
+
+    } finally {
+
+      if (pdfFile != null) {
+        try {
+          Files.deleteIfExists(pdfFile.toPath());
+
+          log.debug("Fichier PDF temporaire supprimé : {}", pdfFile.getAbsolutePath());
+
+        } catch (IOException e) {
+
+          log.warn(
+              "Impossible de supprimer le fichier " + "PDF temporaire : {}",
+              pdfFile.getAbsolutePath(),
+              e);
+        }
+      }
+      if (temporaryDirectory != null) {
+        try {
+          Files.deleteIfExists(temporaryDirectory);
+
+        } catch (IOException e) {
+          log.warn(
+              "Impossible de supprimer le dossier " + "temporaire : {}", temporaryDirectory, e);
+        }
+      }
+
+      documentExportRepository.save(export);
     }
-    documentExportRepository.save(export);
   }
 
   private DocumentExport findEntityById(UUID id) {
+
     return documentExportRepository
         .findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Export introuvable avec l'ID : " + id));
@@ -183,20 +243,27 @@ public class DocumentExportService {
 
   private List<DocumentExport> findExportsByCriteria(
       UUID studentId, UUID promotionId, UUID academicYearId) {
+
     if (studentId != null) {
       return documentExportRepository.findByStudentUserId(studentId);
     }
+
     if (promotionId != null) {
       return documentExportRepository.findByPromotion_Id(promotionId);
     }
+
     if (academicYearId != null) {
       return documentExportRepository.findByAcademicYear_Id(academicYearId);
     }
+
     return documentExportRepository.findAll();
   }
 
   private com.example.demo.model.DocumentExport toModel(DocumentExport entity) {
-    if (entity == null) return null;
+
+    if (entity == null) {
+      return null;
+    }
     return com.example.demo.model.DocumentExport.builder()
         .id(entity.getId())
         .studentId(entity.getStudent() != null ? entity.getStudent().getUserId() : null)
@@ -214,7 +281,9 @@ public class DocumentExportService {
   }
 
   public List<CourseValidation> getValidations(String std) {
+
     Student student = studentService.findByStdNumber(std);
+
     return courseValidationRepository.findByStudent_UserId(student.getUserId());
   }
 }
