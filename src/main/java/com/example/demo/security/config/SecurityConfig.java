@@ -56,6 +56,7 @@ public class SecurityConfig {
                         "/api/teachers",
                         "/api/groups",
                         "/api/promotions",
+                        "/api/courses",
                         "/api/academic-years")
                     .hasRole("ADMIN")
                     .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
