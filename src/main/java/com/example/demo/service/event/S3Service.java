@@ -8,7 +8,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
@@ -25,7 +27,7 @@ public class S3Service {
   public S3Service(
       S3Client s3Client,
       S3Presigner s3Presigner,
-      @Value("${aws.s3.bucket}") String bucketName,
+      @Value("${aws.s3.bucket:${AWS_S3_BUCKET:}}") String bucketName,
       @Value("${aws.s3.presigned-url-duration:86400}") Long presignedUrlDurationSeconds) {
     this.s3Client = s3Client;
     this.s3Presigner = s3Presigner;
@@ -33,28 +35,27 @@ public class S3Service {
     this.presignedUrlDurationSeconds = presignedUrlDurationSeconds;
   }
 
-  public String uploadFileAndGenerateUrl(
-      byte[] fileContent, String fileName, String entityId, String contentType) {
+  public String uploadPdfAndGenerateUrl(byte[] pdfContent, String fileName, String studentId) {
     try {
-      String key = generateObjectKey(entityId, fileName);
+      String key = generateObjectKey(studentId, fileName);
 
       PutObjectRequest putRequest =
           PutObjectRequest.builder()
               .bucket(bucketName)
               .key(key)
-              .contentType(contentType)
+              .contentType("application/pdf")
               .metadata(
                   Map.of(
-                      "entityId", entityId,
+                      "studentId", studentId,
                       "fileName", fileName,
                       "uploadedAt", String.valueOf(System.currentTimeMillis())))
               .build();
 
       s3Client.putObject(
           putRequest,
-          RequestBody.fromInputStream(new ByteArrayInputStream(fileContent), fileContent.length));
+          RequestBody.fromInputStream(new ByteArrayInputStream(pdfContent), pdfContent.length));
 
-      log.info("File uploaded to S3: {}", key);
+      log.info("PDF uploaded to S3 with key: {}", key);
 
       Duration duration = Duration.ofSeconds(presignedUrlDurationSeconds);
 
@@ -67,21 +68,23 @@ public class S3Service {
       PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(presignRequest);
       String presignedUrl = presignedRequest.url().toString();
 
-      log.info("Pre-signed URL generated, valid for {} seconds", presignedUrlDurationSeconds);
+      log.info("Pre-signed URL successfully generated for S3 key {}", key);
 
       return presignedUrl;
 
     } catch (S3Exception e) {
-      log.error("S3 error: {}", e.getMessage());
-      throw new RuntimeException("Failed to upload file to S3", e);
+      log.error("AWS S3 error while uploading document: {}", e.getMessage());
+      throw new RuntimeException("Failed to upload PDF to S3", e);
     } catch (Exception e) {
-      log.error("Error: ", e);
-      throw new RuntimeException("Failed to generate file link", e);
+      log.error("Unexpected error during S3 upload or URL generation: ", e);
+      throw new RuntimeException("Failed to generate PDF link", e);
     }
   }
 
-  private String generateObjectKey(String entityId, String fileName) {
-    String cleanFileName = fileName.replaceAll("[^a-zA-Z0-9.\\-_]", "_");
-    return String.format("exports/%s/%s_%s", entityId, System.currentTimeMillis(), cleanFileName);
+  private String generateObjectKey(String studentId, String fileName) {
+    String cleanFileName =
+        fileName.replaceAll("[^a-zA-Z0-9.\\-_]", "_").replaceAll("(?i)\\.pdf$", "");
+    return String.format(
+        "transcripts/%s/%s_%s.pdf", studentId, System.currentTimeMillis(), cleanFileName);
   }
 }
