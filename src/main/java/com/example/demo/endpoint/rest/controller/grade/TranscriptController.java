@@ -28,12 +28,4 @@ public class TranscriptController {
   public ResponseEntity<GraduationStatusResponse> getGraduationStatus(@PathVariable String std) {
     return ResponseEntity.ok(transcriptService.getGraduationStatus(std));
   }
-
-  //  @PostMapping("/transcript/send-email")
-  //  public ResponseEntity<DocumentExportResponse> sendTranscriptEmail(
-  //      @PathVariable String std, @RequestParam(required = false) String semesterCode) {
-  //    DocumentExportResponse response = documentExportService.exportTranscriptPdf(std,
-  // semesterCode);
-  //    return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
-  //  }
 }
