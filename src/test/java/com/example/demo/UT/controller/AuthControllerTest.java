@@ -5,7 +5,7 @@ import static org.mockito.Mockito.*;
 
 import com.example.demo.dto.request.LoginRequest;
 import com.example.demo.dto.response.LoginResponse;
-import com.example.demo.endpoint.rest.controller.grade.Auth.AuthController;
+import com.example.demo.endpoint.rest.controller.grade.AuthController;
 import com.example.demo.service.AuthService;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
