@@ -11,7 +11,7 @@ import com.example.demo.entity.Course;
 import com.example.demo.entity.Semester;
 import com.example.demo.entity.enums.Parcours;
 import com.example.demo.exception.ResourceNotFoundException;
-import com.example.demo.security.jwt.JwtService;
+import com.example.demo.security.filter.BearerAuthFilter;
 import com.example.demo.service.CourseService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
@@ -23,12 +23,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-// addFilters = false désactive les filtres Spring Security pour ce test : on teste la
-// LOGIQUE du contrôleur, pas l'authentification (qui devrait être testée séparément)
-@WebMvcTest(CourseController.class)
+// excludeFilters : empêche Spring de même essayer d'instancier BearerAuthFilter pendant
+// le scan de @WebMvcTest. C'est plus fiable qu'un @MockBean sur JwtService, qui ne
+// suffisait pas à satisfaire cette dépendance dans ce contexte réduit.
+@WebMvcTest(
+        controllers = CourseController.class,
+        excludeFilters =
+        @ComponentScan.Filter(
+                type = FilterType.ASSIGNABLE_TYPE,
+                classes = BearerAuthFilter.class))
 @AutoConfigureMockMvc(addFilters = false)
 class CourseControllerTest {
 
@@ -37,11 +45,6 @@ class CourseControllerTest {
   @Autowired private ObjectMapper objectMapper;
 
   @MockBean private CourseService courseService;
-
-  // Même avec addFilters = false, @WebMvcTest scanne et essaie de CONSTRUIRE tous les
-  // beans Filter du projet (dont BearerAuthFilter), qui a besoin d'un JwtService dans
-  // son constructeur. On simule donc JwtService pour satisfaire cette dépendance.
-  @MockBean private JwtService jwtService;
 
   private UUID courseId;
   private UUID semesterId;
@@ -56,14 +59,14 @@ class CourseControllerTest {
     semester = Semester.builder().id(semesterId).build();
 
     course =
-        Course.builder()
-            .id(courseId)
-            .code("INFO301")
-            .title("Algorithmique avancée")
-            .credits(4)
-            .parcours(Parcours.COMMON)
-            .semester(semester)
-            .build();
+            Course.builder()
+                    .id(courseId)
+                    .code("INFO301")
+                    .title("Algorithmique avancée")
+                    .credits(4)
+                    .parcours(Parcours.COMMON)
+                    .semester(semester)
+                    .build();
   }
 
   @Test
@@ -72,11 +75,11 @@ class CourseControllerTest {
     when(courseService.findAll()).thenReturn(List.of(course));
 
     mockMvc
-        .perform(get("/api/courses"))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$", hasSize(1)))
-        .andExpect(jsonPath("$[0].code").value("INFO301"))
-        .andExpect(jsonPath("$[0].credits").value(4));
+            .perform(get("/api/courses"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$", hasSize(1)))
+            .andExpect(jsonPath("$[0].code").value("INFO301"))
+            .andExpect(jsonPath("$[0].credits").value(4));
   }
 
   @Test
@@ -85,17 +88,17 @@ class CourseControllerTest {
     when(courseService.findById(courseId)).thenReturn(course);
 
     mockMvc
-        .perform(get("/api/courses/{courseId}", courseId))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.id").value(courseId.toString()))
-        .andExpect(jsonPath("$.title").value("Algorithmique avancée"));
+            .perform(get("/api/courses/{courseId}", courseId))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(courseId.toString()))
+            .andExpect(jsonPath("$.title").value("Algorithmique avancée"));
   }
 
   @Test
   @DisplayName("GET /api/courses/{id} doit retourner 404 si le cours n'existe pas")
   void getCourseById_NotFound() throws Exception {
     when(courseService.findById(courseId))
-        .thenThrow(new ResourceNotFoundException("Cours introuvable avec l'ID : " + courseId));
+            .thenThrow(new ResourceNotFoundException("Cours introuvable avec l'ID : " + courseId));
 
     mockMvc.perform(get("/api/courses/{courseId}", courseId)).andExpect(status().isNotFound());
   }
@@ -106,40 +109,40 @@ class CourseControllerTest {
     when(courseService.create(any())).thenReturn(course);
 
     String requestBody =
-        """
-        {
-          "code": "INFO301",
-          "title": "Algorithmique avancée",
-          "credits": 4,
-          "parcours": "COMMON",
-          "semesterId": "%s"
-        }
-        """
-            .formatted(semesterId);
+            """
+            {
+              "code": "INFO301",
+              "title": "Algorithmique avancée",
+              "credits": 4,
+              "parcours": "COMMON",
+              "semesterId": "%s"
+            }
+            """
+                    .formatted(semesterId);
 
     mockMvc
-        .perform(post("/api/courses").contentType(MediaType.APPLICATION_JSON).content(requestBody))
-        .andExpect(status().isCreated())
-        .andExpect(jsonPath("$.code").value("INFO301"))
-        .andExpect(jsonPath("$.credits").value(4));
+            .perform(post("/api/courses").contentType(MediaType.APPLICATION_JSON).content(requestBody))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.code").value("INFO301"))
+            .andExpect(jsonPath("$.credits").value(4));
   }
 
   @Test
   @DisplayName("POST /api/courses doit retourner 400 si le champ 'code' est manquant")
   void createCourse_ValidationError() throws Exception {
     String requestBody =
-        """
-        {
-          "title": "Algorithmique avancée",
-          "credits": 4,
-          "parcours": "COMMON",
-          "semesterId": "%s"
-        }
-        """
-            .formatted(semesterId);
+            """
+            {
+              "title": "Algorithmique avancée",
+              "credits": 4,
+              "parcours": "COMMON",
+              "semesterId": "%s"
+            }
+            """
+                    .formatted(semesterId);
 
     mockMvc
-        .perform(post("/api/courses").contentType(MediaType.APPLICATION_JSON).content(requestBody))
-        .andExpect(status().isBadRequest());
+            .perform(post("/api/courses").contentType(MediaType.APPLICATION_JSON).content(requestBody))
+            .andExpect(status().isBadRequest());
   }
 }
